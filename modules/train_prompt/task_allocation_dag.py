@@ -1,10 +1,11 @@
-# EXAMPLE 1 - Task Description: Make a french fries
+# EXAMPLE 1 - Task Description: Make a french fries.
+# Task Understanding: Fry a potato, then serve it on a plate.
 # GENERAL TASK DECOMPOSITION
 # Independent subtasks:
-# Subtask 1: Slice potato.
-# Subtask 2: Wash the plate.
-# Subtask 3: Fry the potato.
-# Subtask 4: Serve on plate.
+# Subtask 1: Slice potato (Skills required: GoToObject, PickupObject, PutObject, SliceObject).
+# Subtask 2: Wash the plate. (Skills required: GoToObject, PickupObject, PutObject, SwitchOn, SwitchOff)
+# Subtask 3: Fry the potato. (Skills required: GoToObject, PickupObject, PutObject, SwitchOn, SwitchOff)
+# Subtask 4: Serve on plate. (Skills required: GoToObject, PickupObject, PutObject)
 # We can parallelize Subtask 1 and Subtask 2, when Subtask 1 done, execute task 3, then execute Subtask 4 after Subtask 2 and Subtask 3 done.
 
 # CODE
@@ -89,7 +90,7 @@ def serve_potato_on_plate():
 #       |
 #       V
 # serve_potato_on_plate()
-# Now, implement the task allocation code based from above DAG.
+# Now, implement the task allocation based from above DAG.
 
 # Parallelize SubTask 1 and SubTask 2
 task1_thread = threading.Thread(target=slice_potato)
@@ -224,3 +225,106 @@ task2_thread.join()
 
 # Execute Subtask 4 when all Subtask 2 and Subtask 3 is done.
 serve_potato_on_plate([robots[2]])
+
+
+
+# EXAMPLE 2 - Task Description: Prepare for the meeting.
+# Task Understanding: Put the laptop, book, and pen to the coffee table.
+# GENERAL TASK DECOMPOSITION
+# Independent subtasks:
+# Subtask 1: Put the laptop, book, and pen to the coffee table. (Skills required: GoToObject, PickupObject, PutObject)
+# We can directly execute the Subtask 1.
+
+# CODE
+def put_things_to_coffee_table():
+    # 0: Subtask 1: Put the laptop, book, and pen to the coffee table.
+    # 1: Go to the laptop.
+    GoToObject('Laptop')
+    # 2: Pick up the laptop.
+    PickupObject('Laptop')
+    # 3: Go to the coffee table.
+    GoToObject('CoffeeTable')
+    # 4: Put the laptop to the coffee table.
+    PutObject('Laptop', 'CoffeeTable')
+    # 5: Go to the book.
+    GoToObject('Book')
+    # 6: Pick up the book.
+    PickupObject('Book')
+    # 7: Go to the coffee table.
+    GoToObject('CoffeeTable')
+    # 8: Put the book to the coffee table.
+    PutObject('Book', 'CoffeeTable')
+    # 9: Go to the pen.
+    GoToObject('Pen')
+    # 10: Pick up the pen.
+    PickupObject('Pen')
+    # 11: Go to the coffee table.
+    GoToObject('CoffeeTable')
+    # 12: Put the pen to the coffee table.
+    PutObject('Pen', 'CoffeeTable')
+
+# DIRECTED ACYCLIC GRAPH (DAG) Task Allocation
+# For better task allocation, first we need to design DAG:
+# put_things_to_coffee_table()
+# Now, implement the task allocation based from above DAG.
+
+# Execute subtask 1.
+put_things_to_coffee_table()
+
+# TASK ALLOCATION
+robots = [
+    {'name': 'robot1', 'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'BreakObject', 'SliceObject', 'SwitchOn', 'SwitchOff', 'DropHandObject', 'ThrowObject'], 'mass': 100},
+    {'name': 'robot2', 'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'BreakObject', 'SliceObject', 'PickupObject', 'PutObject', 'SwitchOn', 'SwitchOff', 'DropHandObject', 'ThrowObject', 'PushObject', 'PullObject'],'mass': 100},
+    {'name': 'robot3', 'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'BreakObject', 'SliceObject', 'SwitchOn', 'SwitchOff', 'DropHandObject', 'ThrowObject', 'PickupObject', 'PutObject'], 'mass': 100}
+]
+# SOLUTION
+# All the robots DO NOT share the same set and number (no_skills) of skills. In this case where all robots have different sets of skills - Focus on Task Allocation based on Robot Skills alone.
+# Analyze the skills required for each subtask and the skills each robot possesses. In this scenario, we have one main subtasks: 'Put things to the coffee table'.
+# For the 'Slice Potato' subtask, it requires 'GoToObject', 'PickupObject', and 'PutObject' skills. In this case Robot 2 and Robot 3 has all these skills.
+# Based from explanation above, team of robots may be required, because Robot 2 and Robot 3 has meet the skills requirements and it also will make the subtask finished in shorter amount of time.
+# From subtask 1, we can design sub-subtask decomposition:
+# Sub-subtask 1: Put the laptop to coffee table.
+# Sub-subtask 2: Put the book to coffee table.
+# Sub-subtask 3: Put the pen to coffee table.
+# Assign Sub-subtask 1 for Robot 2, assign Sub-subtask 2 for Robot 3, then wait for Robot 2 finishing the Sub-subtask 1 before assigning the Sub-subtask 3.
+
+# DIRECTED ACYCLIC GRAPH (DAG) Robot Allocation
+# For better robot allocation based from given subtask and robot that fulfill the skill requirements, DAG are required:
+# Put the laptop sub-subtask(robots[1])     Put the book sub-subtask(robots[2])
+#                   |                                       |
+#                   V                                       |
+# put the pen sub-subtask(robots[1]) <----------------------|
+
+# CODE Solution
+def put_things_to_coffee_table(robots):
+    # 0: Subtask 1: Put the laptop, book, and pen to the coffee table.
+    # 1: Sub-subtask 1: Put the laptop to coffee table.
+    # 2: Go to the laptop.
+    GoToObject(robots[1], 'Laptop')
+    # 3: Pick up the laptop.
+    PickupObject(robots[1], 'Laptop')
+    # 4: Go to the coffee table.
+    GoToObject(robots[1], 'CoffeeTable')
+    # 5: Put the laptop to the coffee table.
+    PutObject(robots[1], 'Laptop', 'CoffeeTable')
+    # 6: Sub-subtask2: Put the book to coffee table.
+    # 7: Go to the book.
+    GoToObject(robots[2], 'Book')
+    # 8: Pick up the book.
+    PickupObject(robots[2], 'Book')
+    # 9: Go to the coffee table.
+    GoToObject(robots[2], 'CoffeeTable')
+    # 10: Put the book to the coffee table.
+    PutObject(robots[2], 'Book', 'CoffeeTable')
+    # 11: Sub-subtask 3: Put the pen to coffee table.
+    # 12: Go to the pen.
+    GoToObject(robots[1], 'Pen')
+    # 13: Pick up the pen.
+    PickupObject(robots[1], 'Pen')
+    # 14: Go to the coffee table.
+    GoToObject(robots[1], 'CoffeeTable')
+    # 15: Put the pen to the coffee table.
+    PutObject(robots[1], 'Pen', 'CoffeeTable')
+
+# Execute Subtask 1.
+put_things_to_coffee_table([robots[1], robots[2]])

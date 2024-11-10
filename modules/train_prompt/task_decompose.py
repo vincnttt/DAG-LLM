@@ -6,8 +6,8 @@
 # Task Understanding are the generalized task, learn based from this pattern.
 # Decompose and parallelize subtasks wherever possible.
 # Independent subtasks:
-# Subtask 1: Turn off the lights. (GoToObject, SwitchOn, SwitchOff)
-# Subtask 2: Turn off the floor lamp. (GoToObject, SwitchOn, SwitchOff)
+# Subtask 1: Turn off the lights. (Skills required: GoToObject, SwitchOn, SwitchOff)
+# Subtask 2: Turn off the floor lamp. (Skills required: GoToObject, SwitchOn, SwitchOff)
 # We can parallelize Subtask 1 and Subtask 2, because they don't depend on each other.
 
 # CODE
@@ -49,10 +49,10 @@ task2_thread.join()
 # Task Understanding are the generalized task, learn based from this pattern.
 # Decompose and parallelize subtasks wherever possible.
 # Independent subtasks:
-# Subtask 1: Cook an egg.
-# Subtask 2: Slice lettuce, tomato and bread.
-# Subtask 3: Wash a plate.
-# Subtask 4: Assemble the sandwich.
+# Subtask 1: Cook an egg. (Skills required: GoToObject, PickupObject, PutObject, OpenObject, CloseObject, SwitchOn, SwitchOff)
+# Subtask 2: Slice lettuce, tomato and bread. (Skills required: GoToObject, PickupObject, PutObject, SliceObject)
+# Subtask 3: Wash a plate. (Skills required: GoToObject, PickupObject, PutObject, SwitchOn, SwitchOff)
+# Subtask 4: Assemble the sandwich. (Skills required: GoToObject, PickupObject, PutObject)
 # We can parallelize the Subtask 1 and Subtask 2, and when Subtask 1 done execute Subtask 3, then execute Subtask 4.
 
 # CODE
@@ -194,4 +194,43 @@ assemble_sandwich()
 
 
 
-# EXAMPLE 3 -
+# EXAMPLE 3 - Task Description: Prepare for the meeting.
+# Task Understanding: Put the laptop, book, and pen to the coffee table.
+# GENERAL TASK DECOMPOSITION
+# Task Description are the given task, which is described in abstract way.
+# Task Understanding are the generalized task, learn based from this pattern.
+# Decompose and parallelize subtasks wherever possible.
+# Independent subtasks:
+# Subtask 1: Put the laptop, book, and pen to the coffee table. (Skills required: GoToObject, PickupObject, PutObject)
+# We can directly execute the Subtask 1.
+
+# CODE
+def put_things_to_coffee_table():
+    # 0: Subtask 1: Put the laptop, book, and pen to the coffee table.
+    # 1: Go to the laptop.
+    GoToObject('Laptop')
+    # 2: Pick up the laptop.
+    PickupObject('Laptop')
+    # 3: Go to the coffee table.
+    GoToObject('CoffeeTable')
+    # 4: Put the laptop to the coffee table.
+    PutObject('Laptop', 'CoffeeTable')
+    # 5: Go to the book.
+    GoToObject('Book')
+    # 6: Pick up the book.
+    PickupObject('Book')
+    # 7: Go to the coffee table.
+    GoToObject('CoffeeTable')
+    # 8: Put the book to the coffee table.
+    PutObject('Book', 'CoffeeTable')
+    # 9: Go to the pen.
+    GoToObject('Pen')
+    # 10: Pick up the pen.
+    PickupObject('Pen')
+    # 11: Go to the coffee table.
+    GoToObject('CoffeeTable')
+    # 12: Put the pen to the coffee table.
+    PutObject('Pen', 'CoffeeTable')
+
+# Execute subtask 1.
+put_things_to_coffee_table()
