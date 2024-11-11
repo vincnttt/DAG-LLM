@@ -606,22 +606,3 @@ def ThrowObject(robot, sw_obj):
 
     action_queue.append({'action': 'ThrowObject', 'objectId': sw_obj_id, 'agent_id': agent_id})
     time.sleep(1)
-
-
-def Conversation(robot, message):
-    print("Speaking: ", message)
-    write_log("[Speaking]", message)
-
-    robot_name = robot['name']
-    agent_id = int(robot_name[-1]) - 1
-
-    # action_queue.append({'action': 'Conversation', 'agent_id': agent_id})
-    time.sleep(1)
-
-
-def GuideGuest(robot, dest_obj):
-    print("Guiding: ", dest_obj)
-    write_log("[Guiding]", dest_obj)
-
-    GoToObject(robot, dest_obj)
-    time.sleep(1)
