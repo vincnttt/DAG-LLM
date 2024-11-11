@@ -1,5 +1,5 @@
 # EXAMPLE 1 - Task Description: Make a french fries.
-# Task Understanding: Fry a potato, then serve it on a plate.
+# Task Understanding: Slice the potato, fry the sliced potato, then serve it on a plate.
 # GENERAL TASK DECOMPOSITION
 # Independent subtasks:
 # Subtask 1: Slice potato (Skills required: GoToObject, PickupObject, PutObject, SliceObject).
