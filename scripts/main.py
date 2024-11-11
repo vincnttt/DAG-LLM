@@ -133,6 +133,9 @@ if __name__ == '__main__':
     parser.add_argument("--llm", type=str, required=True,
                         choices=["gpt-4o", "claude-3-5-sonnet-20240620", "glm-4"])
 
+    parser.add_argument("--prompt-reasoning-set", type=str, default="task_coa_reasoning",
+                        choices=["task_coa_reasoning"])
+
     parser.add_argument("--prompt-decompose-set", type=str, default="task_decompose",
                         choices=["task_decompose"])
 
@@ -197,6 +200,15 @@ if __name__ == '__main__':
 
     prompt += "\n\n" + decompose_prompt
 
+    print("Task CoA Reasoning...")
+
+    # Read reasoning train prompts
+    reasoning_prompt_file = open(os.getcwd() + "/modules/pythonic_prompt/" + args.prompt_reasoning_set + ".py", "r")
+    reasoning_prompt = reasoning_prompt_file.read()
+    reasoning_prompt_file.close()
+
+    prompt += "\n\n" + reasoning_prompt
+
     print("[STAGE 2]: ", prompt)
 
     print("Generating Decomposed Plans...")
@@ -206,7 +218,10 @@ if __name__ == '__main__':
         curr_prompt = f"{prompt}\n\n# Task Description: {task}"
 
         # Pass to LLM
-        messages = [{"role": "user", "content": curr_prompt}]
+        messages = [
+            {"role": "system", "content": "You are an assistant who decomposes abstract instructions into specific, actionable steps. Based from given examples, there is Task Description is abstract instruction, and Task Understanding is the specific actions to accomplish the goal. Learn from it."},
+            {"role": "user", "content": curr_prompt}
+        ]
         _, text = llm(messages, args.llm, max_tokens=1500)
 
         # decomposed_plan.append(text)
@@ -251,7 +266,7 @@ if __name__ == '__main__':
                  "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are neccesary to make task allocation better."},
                 {"role": "user", "content": curr_prompt}
             ]
-            _, text = llm(messages, args.llm, max_tokens=1400)
+            _, text = llm(messages, args.llm, max_tokens=1500)
 
         else:
             messages = [
@@ -259,7 +274,7 @@ if __name__ == '__main__':
                  "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are neccesary to make task allocation better."},
                 {"role": "user", "content": curr_prompt}
             ]
-            _, text = llm(messages, args.llm, max_tokens=1400)
+            _, text = llm(messages, args.llm, max_tokens=1500)
 
         if args.llm == "gpt-4o" or args.llm == "claude-3-5-sonnet-20240620":
             text = comment_outside_codeblocks(text)
@@ -296,9 +311,6 @@ if __name__ == '__main__':
 
             with open(f"./outputs/{folder_name}/decomposed_plan.py", 'w') as d:
                 d.write(decomposed_plan[idx])
-
-            # with open(f"./outputs/{folder_name}/allocated_plan.py", 'w') as a:
-            #     a.write(allocated_plan[idx])
 
             with open(f"./outputs/{folder_name}/code_plan.py", 'w') as x:
                 x.write(code_plan[idx])
