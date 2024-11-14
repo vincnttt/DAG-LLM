@@ -85,25 +85,25 @@ def cook_egg():
 
 def slice_ingredients():
     # 0: SubTask 2: Slice lettuce, tomato and bread.
-    # 1: Go to the Knife.
+    # 1: Go to the knife.
     GoToObject('Knife')
-    # 2: Pick up the Knife.
+    # 2: Pick up the knife.
     PickupObject('Knife')
-    # 3: Go to the Lettuce.
+    # 3: Go to the lettuce.
     GoToObject('Lettuce')
-    # 4: Slice the Lettuce.
+    # 4: Slice the lettuce.
     SliceObject('Lettuce')
-    # 5: Go to the Tomato.
+    # 5: Go to the tomato.
     GoToObject('Tomato')
-    # 6: Slice the Tomato.
+    # 6: Slice the tomato.
     SliceObject('Tomato')
-    # 7: Go to the Bread.
+    # 7: Go to the bread.
     GoToObject('Bread')
-    # 8: Slice the Bread.
+    # 8: Slice the bread.
     SliceObject('Bread')
     # 9: Go to the countertop.
     GoToObject('CounterTop')
-    # 10: Put the Knife back on the CounterTop.
+    # 10: Put the knife back on the countertop.
     PutObject('Knife', 'CounterTop')
 
 def wash_plate():
@@ -131,30 +131,30 @@ def wash_plate():
 
 def assemble_sandwich():
     # 0: SubTask 4: Assemble the Sandwich
-    # 1: Go to the bread slice.
-    GoToObject('Bread')
-    # 2: Pick up the bread slice.
-    PickupObject('Bread')
+    # 1: Go to the sliced bread.
+    GoToObject('BreadSliced')
+    # 2: Pick up the sliced bread.
+    PickupObjectSliced('BreadSliced')
     # 3: Go to the plate.
     GoToObject('Plate')
     # 4: Place a slice of bread on the plate.
-    PutObject('Bread', 'Plate')
+    PutObjectSliced('BreadSliced', 'Plate')
     # 5: Go to the lettuce.
-    GoToObject('Lettuce')
+    GoToObject('LettuceSliced')
     # 6: Pick up the lettuce.
-    PickupObject('Lettuce')
+    PickupObjectSliced('LettuceSliced')
     # 7: Go to the plate.
     GoToObject('Plate')
     # 8: Place a slice of lettuce on the plate.
-    PutObject('Lettuce', 'Plate')
+    PutObjectSliced('LettuceSliced', 'Plate')
     # 9: Go to the tomato.
-    GoToObject('Tomato')
+    GoToObject('TomatoSliced')
     # 10: Pick up the tomato.
-    PickupObject('Tomato')
+    PickupObjectSliced('TomatoSliced')
     # 11: Go to the plate.
     GoToObject('Plate')
     # 12: Place a slice of tomato on the plate.
-    PutObject('Tomato', 'Plate')
+    PutObjectSliced('TomatoSliced', 'Plate')
     # 13: Go to the egg.
     GoToObject('Egg')
     # 14: Pick up the egg.
@@ -163,14 +163,7 @@ def assemble_sandwich():
     GoToObject('Plate')
     # 16: Place a slice of egg on the plate.
     PutObject('Egg', 'Plate')
-    # 17: Go to another bread slice.
-    GoToObject('Bread')
-    # 18: Pick up the bread slice.
-    PickupObject('Bread')
-    # 19: Go to the plate.
-    GoToObject('Plate')
-    # 20: Place another slice of bread on top of the plate.
-    PutObject('Bread', 'Plate')
+
 
 # Parallelize SubTask 1 and SubTask 2
 task1_thread = threading.Thread(target=cook_egg)
@@ -234,3 +227,70 @@ def put_things_to_coffee_table():
 
 # Execute subtask 1.
 put_things_to_coffee_table()
+
+
+
+# EXAMPLE 4 - Task Description: Make a toast.
+# Task Understanding: Slice a bread, toast the sliced bread, then serve it on a plate.
+# GENERAL TASK DECOMPOSITION
+# Task Description are the given task, which is described in abstract way.
+# Task Understanding are the generalized task, learn based from this pattern.
+# Decompose and parallelize subtasks wherever possible.
+# Independent subtasks:
+# Subtask 1: Slice bread. (Skills required: GoToObject, PickupObject, PutObject, SliceObject)
+# Subtask 2: Toast the sliced bread. (Skills required: GoToObject, PickupObject, PutObject, SwitchOn, SwitchOff)
+# Subtask 3: Serve the toast on a plate. (Skills required: GoToObject, PickupObject, PutObject)
+# We can execute all the Subtask in serial, start from Subtask 1, when done execute Subtask 2, then execute Subtask 3 after Subtask 3 done.
+
+# CODE
+def slice_bread():
+    # 0: SubTask 1: Slice bread.
+    # 1: Go to the knife.
+    GoToObject('Knife')
+    # 2: Pick up the knife.
+    PickupObject('Knife')
+    # 3: Go to the bread.
+    GoToObject('Bread')
+    # 4: Slice the bread.
+    SliceObject('Bread')
+    # 5: Go to the countertop.
+    GoToObject('CounterTop')
+    # 6: Put the knife back on the CounterTop.
+    PutObject('Knife', 'CounterTop')
+
+def toast_bread():
+    # 0: Subtask 2: Toast the sliced bread.
+    # 1: Go to the sliced bread.
+    GoToObject('BreadSliced')
+    # 2: Pick up the sliced bread.
+    PickupObjectSliced('BreadSliced')
+    # 3: Go to the toaster.
+    GoToObject('Toaster')
+    # 4: Put sliced bread in to the toaster.
+    PutObjectSliced('BreadSliced', 'Toaster')
+    # 5: Switch on the toaster.
+    SwitchOn('Toaster')
+    # 6: Wait for a while to let the sliced bread cooked.
+    time.sleep(5)
+    # 7: Switch off the toaster.
+    SwitchOff('Toaster')
+
+def serve_toast_on_plate():
+    # 0: Subtask 3: Serve the toast on a plate.
+    # 1: Go to the toaster.
+    GoToObject('Toaster')
+    # 2: Pick up the toast.
+    PickupObjectSliced('BreadSliced')
+    # 3: Go to the plate.
+    GoToObject('Plate')
+    # 4: Put the toast on a plate
+    PutObjectSliced('BreadSliced', 'Plate')
+
+# Execute Subtask 1
+slice_bread()
+
+# Execute Subtask 2
+toast_bread()
+
+# Execute Subtask 3
+serve_toast_on_plate()

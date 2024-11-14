@@ -328,3 +328,160 @@ def put_things_to_coffee_table(robots):
 
 # Execute Subtask 1.
 put_things_to_coffee_table([robots[1], robots[2]])
+
+
+
+# EXAMPLE 3 - Task Description: Make a toast.
+# Task Understanding: Slice a bread, toast the sliced bread, then serve it on a plate.
+# GENERAL TASK DECOMPOSITION
+# Task Description are the given task, which is described in abstract way.
+# Task Understanding are the generalized task, learn based from this pattern.
+# Decompose and parallelize subtasks wherever possible.
+# Independent subtasks:
+# Subtask 1: Slice bread. (Skills required: GoToObject, PickupObject, PutObject, SliceObject)
+# Subtask 2: Toast the sliced bread. (Skills required: GoToObject, PickupObject, PutObject, SwitchOn, SwitchOff)
+# Subtask 3: Serve the toast on a plate. (Skills required: GoToObject, PickupObject, PutObject)
+# We can execute all the Subtask in serial, start from Subtask 1, when done execute Subtask 2, then execute Subtask 3 after Subtask 3 done.
+
+# CODE
+def slice_bread():
+    # 0: SubTask 1: Slice bread.
+    # 1: Go to the knife.
+    GoToObject('Knife')
+    # 2: Pick up the knife.
+    PickupObject('Knife')
+    # 3: Go to the bread.
+    GoToObject('Bread')
+    # 4: Slice the bread.
+    SliceObject('Bread')
+    # 5: Go to the countertop.
+    GoToObject('CounterTop')
+    # 6: Put the knife back on the CounterTop.
+    PutObject('Knife', 'CounterTop')
+
+def toast_bread():
+    # 0: Subtask 2: Toast the sliced bread.
+    # 1: Go to the sliced bread.
+    GoToObject('BreadSliced')
+    # 2: Pick up the sliced bread.
+    PickupObject('BreadSliced')
+    # 3: Go to the toaster.
+    GoToObject('Toaster')
+    # 4: Put sliced bread in to the toaster.
+    PutObject('BreadSliced', 'Toaster')
+    # 5: Switch on the toaster.
+    SwitchOn('Toaster')
+    # 6: Wait for a while to let the sliced bread cooked.
+    time.sleep(5)
+    # 7: Switch off the toaster.
+    SwitchOff('Toaster')
+
+def serve_toast_on_plate():
+    # 0: Subtask 3: Serve the toast on a plate.
+    # 1: Go to the toaster.
+    GoToObject('Toaster')
+    # 2: Pick up the toast.
+    PickupObject('BreadSliced')
+    # 3: Go to the plate.
+    GoToObject('Plate')
+    # 4: Put the toast on a plate
+    PutObject('BreadSliced', 'Plate')
+
+# DIRECTED ACYCLIC GRAPH (DAG) Task Allocation
+# For better task allocation, first we need to design DAG:
+# slice_bread()
+#       |
+#       V
+# toast_bread()
+#       |
+#       V
+# serve_toast_on_plate()
+# Now, implement the task allocation based from above DAG.
+
+# Execute Subtask 1
+slice_bread()
+
+# Execute Subtask 2
+toast_bread()
+
+# Execute Subtask 3
+serve_toast_on_plate()
+
+# TASK ALLOCATION
+robots = [
+    {'name': 'robot1', 'skills': ['GoToObject', 'BreakObject', 'SliceObject', 'PickupObject', 'PutObject', 'SwitchOn', 'SwitchOff', 'PushObject', 'PullObject'], 'mass': 100},
+    {'name': 'robot2', 'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'BreakObject', 'SliceObject', 'PickupObject', 'PutObject', 'SwitchOn', 'SwitchOff', 'DropHandObject', 'ThrowObject'],'mass': 100},
+    {'name': 'robot3', 'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'BreakObject', 'SliceObject', 'PickupObject', 'PutObject'], 'mass': 100}
+]
+# SOLUTION
+# All the robots DO NOT share the same set and number (no_skills) of skills. In this case where all robots have different sets of skills - Focus on Task Allocation based on Robot Skills alone.
+# Analyze the skills required for each subtask and the skills each robot possesses. In this scenario, we have four main subtasks: 'Slice bread', 'Toast the sliced bread' and 'Serve the toast on a plate'.
+# For the 'Slice bread' subtask, it requires 'GoToObject', 'PickupObject', 'PutObject', and 'SliceObject'. In this case Robot 1 and Robot 2 has all these skills.
+# For the 'Slice bread' subtask, it requires 'GoToObject', 'PickupObject', 'PutObject', 'SwitchOn', and 'SwitchOff'. In this case Robot 1 and Robot 2 has all these skills.
+# For the 'Slice bread' subtask, it requires 'GoToObject', 'PickupObject', and 'PutObject'. In this case Robot 1 and Robot 2 has all these skills.
+# As from above solution, all subtasks can be done by Robot 1 and Robot 2, in this case we can allocate the robot based from its condition and the availability of current robot, also take care to the dependency of each subtask.
+
+# CODE Solution
+def slice_bread(robots):
+    # 0: SubTask 1: Slice bread.
+    # 1: Go to the knife.
+    GoToObject(robots, 'Knife')
+    # 2: Pick up the knife.
+    PickupObject(robots, 'Knife')
+    # 3: Go to the bread.
+    GoToObject(robots, 'Bread')
+    # 4: Slice the bread.
+    SliceObject(robots, 'Bread')
+    # 5: Go to the countertop.
+    GoToObject(robots, 'CounterTop')
+    # 6: Put the knife back on the CounterTop.
+    PutObject(robots, 'Knife', 'CounterTop')
+
+def toast_bread(robots):
+    # 0: Subtask 2: Toast the sliced bread.
+    # 1: Go to the sliced bread.
+    GoToObject(robots, 'BreadSliced')
+    # 2: Pick up the sliced bread.
+    PickupObject(robots, 'BreadSliced')
+    # 3: Go to the toaster.
+    GoToObject(robots, 'Toaster')
+    # 4: Put sliced bread in to the toaster.
+    PutObject(robots, 'BreadSliced', 'Toaster')
+    # 5: Switch on the toaster.
+    SwitchOn(robots, 'Toaster')
+    # 6: Wait for a while to let the sliced bread cooked.
+    time.sleep(5)
+    # 7: Switch off the toaster.
+    SwitchOff(robots, 'Toaster')
+
+def serve_toast_on_plate(robots):
+    # 0: Subtask 3: Serve the toast on a plate.
+    # 1: Go to the toaster.
+    GoToObject(robots, 'Toaster')
+    # 2: Pick up the toast.
+    PickupObject(robots, 'BreadSliced')
+    # 3: Go to the plate.
+    GoToObject(robots, 'Plate')
+    # 4: Put the toast on a plate
+    PutObject(robots, 'BreadSliced', 'Plate')
+
+# DIRECTED ACYCLIC GRAPH (DAG) Robot Allocation
+# For better robot allocation based from given subtask and robot that fulfill the skill requirements, DAG are required:
+# slice_bread(robots[0])
+#           |
+#           V
+# toast_bread(robots[1])
+#           |
+#           V
+# serve_toast_on_plate(robots[1])
+
+# Now, implement the task allocation based from above DAG.
+
+# Execute Subtask 1
+slice_bread([robots[0]])
+
+# Execute Subtask 2
+toast_bread([robots[1]])
+
+# Execute Subtask 3
+serve_toast_on_plate([robots[1]])
