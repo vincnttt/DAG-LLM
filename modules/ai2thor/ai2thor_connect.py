@@ -384,6 +384,37 @@ def PickupObject(robots, pick_obj):
         time.sleep(1)
 
 
+def PickupSlicedObject(robots, pick_obj):
+    if not isinstance(robots, list):
+        # convert robot to a list
+        robots = [robots]
+    no_agents = len(robots)
+    # robots distance to the goal
+    for idx in range(no_agents):
+        print("Picking Sliced: ", pick_obj)
+        write_log("[Picking Sliced]", pick_obj)
+
+        robot = robots[idx]
+        robot_name = robot['name']
+        agent_id = int(robot_name[-1]) - 1
+        objs = list([obj["objectId"] for obj in c.last_event.metadata["objects"]])
+        objs_center = list([obj["axisAlignedBoundingBox"]["center"] for obj in c.last_event.metadata["objects"]])
+
+        for idx, obj in enumerate(objs):
+            match = re.match(pick_obj + "_1", obj.rsplit('|', 1)[-1])
+            if match is not None:
+                pick_obj_id = obj
+                dest_obj_center = objs_center[idx]
+                if dest_obj_center != {'x': 0.0, 'y': 0.0, 'z': 0.0}:
+                    break  # find the first instance
+
+        print("Picking Up Sliced ", pick_obj_id, dest_obj_center)
+        write_log("[Picking Up Sliced]", f"{pick_obj_id} {dest_obj_center}")
+
+        action_queue.append({'action': 'PickupObject', 'objectId': pick_obj_id, 'agent_id': agent_id})
+        time.sleep(1)
+
+
 def PutObject(robot, put_obj, recp):
     print("Putting: ", put_obj)
     write_log("[Putting]", put_obj)
@@ -414,6 +445,41 @@ def PutObject(robot, put_obj, recp):
     # time.sleep(1)
     print("Putting In: ", recp_obj_id, dest_obj_center)
     write_log("[Putting In]", f"{recp_obj_id} {dest_obj_center}")
+
+    action_queue.append({'action': 'PutObject', 'objectId': recp_obj_id, 'agent_id': agent_id})
+    time.sleep(1)
+
+
+def PutSlicedObject(robot, put_obj, recp):
+    print("Putting Sliced: ", put_obj)
+    write_log("[Putting Sliced]", put_obj)
+
+    robot_name = robot['name']
+    agent_id = int(robot_name[-1]) - 1
+    objs = list(set([obj["objectId"] for obj in c.last_event.metadata["objects"]]))
+    objs_center = list([obj["axisAlignedBoundingBox"]["center"] for obj in c.last_event.metadata["objects"]])
+    objs_dists = list([obj["distance"] for obj in c.last_event.metadata["objects"]])
+
+    metadata = c.last_event.events[agent_id].metadata
+    robot_location = [metadata["agent"]["position"]["x"], metadata["agent"]["position"]["y"],
+                      metadata["agent"]["position"]["z"]]
+    dist_to_recp = 9999999  # distance b/w robot and the recp obj
+    for idx, obj in enumerate(objs):
+        match = re.match(recp.rsplit('|', 1)[-1], obj + "_1")
+        if match is not None:
+            dist = objs_dists[idx]
+            if dist < dist_to_recp:
+                recp_obj_id = obj
+                dest_obj_center = objs_center[idx]
+                dist_to_recp = dist
+
+    global recp_id
+    # if recp_id is not None:
+    #     recp_obj_id = recp_id
+    # GoToObject(robot, recp_obj_id)
+    # time.sleep(1)
+    print("Putting In Sliced: ", recp_obj_id, dest_obj_center)
+    write_log("[Putting In Sliced]", f"{recp_obj_id} {dest_obj_center}")
 
     action_queue.append({'action': 'PutObject', 'objectId': recp_obj_id, 'agent_id': agent_id})
     time.sleep(1)

@@ -470,22 +470,21 @@ def PickupSlicedObject(robots, pick_obj):
         robot = robots[idx]
         robot_name = robot['name']
         agent_id = int(robot_name[-1]) - 1
-        objs = list([obj["objectId"].rsplit('|', 1)[-1] for obj in c.last_event.metadata["objects"]])
-        objs_center = list([obj["axisAlignedBoundingBox"]["center"] for obj in c.last_event.metadata["objects"]["objectId"].rsplit('|', 1)[-1]])
+        objs = list([obj["objectId"] for obj in c.last_event.metadata["objects"]])
+        objs_center = list([obj["axisAlignedBoundingBox"]["center"] for obj in c.last_event.metadata["objects"]])
 
         for idx, obj in enumerate(objs):
-            match = re.match(pick_obj, obj)
+            match = re.match(pick_obj + "_1", obj.rsplit('|', 1)[-1])
             if match is not None:
                 pick_obj_id = obj
                 dest_obj_center = objs_center[idx]
                 if dest_obj_center != {'x': 0.0, 'y': 0.0, 'z': 0.0}:
                     break  # find the first instance
-        # GoToObject(robot, pick_obj_id)
-        # time.sleep(1)
-        print("Picking Up ", pick_obj_id, dest_obj_center)
-        write_log("[Picking Up]", f"{pick_obj_id} {dest_obj_center}")
 
-        action_queue.append({'action': 'PickupSlicedObject', 'objectId': pick_obj_id, 'agent_id': agent_id})
+        print("Picking Up Sliced ", pick_obj_id, dest_obj_center)
+        write_log("[Picking Up Sliced]", f"{pick_obj_id} {dest_obj_center}")
+
+        action_queue.append({'action': 'PickupObject', 'objectId': pick_obj_id, 'agent_id': agent_id})
         time.sleep(1)
 
 
@@ -525,13 +524,12 @@ def PutObject(robot, put_obj, recp):
 
 
 def PutSlicedObject(robot, put_obj, recp):
-    print("Putting: ", put_obj)
-    write_log("[Putting]", put_obj)
+    print("Putting Sliced: ", put_obj)
+    write_log("[Putting Sliced]", put_obj)
 
     robot_name = robot['name']
     agent_id = int(robot_name[-1]) - 1
-    objs_sliced = list(set([obj["objectId"].rsplit('|', 1)[-1] for obj in c.last_event.metadata["objects"]]))
-    objs_target = list(set([obj["objectId"] for obj in c.last_event.metadata["objects"]]))
+    objs = list(set([obj["objectId"] for obj in c.last_event.metadata["objects"]]))
     objs_center = list([obj["axisAlignedBoundingBox"]["center"] for obj in c.last_event.metadata["objects"]])
     objs_dists = list([obj["distance"] for obj in c.last_event.metadata["objects"]])
 
@@ -539,12 +537,12 @@ def PutSlicedObject(robot, put_obj, recp):
     robot_location = [metadata["agent"]["position"]["x"], metadata["agent"]["position"]["y"],
                       metadata["agent"]["position"]["z"]]
     dist_to_recp = 9999999  # distance b/w robot and the recp obj
-    for idx, (obj_s, obj_t) in enumerate(zip(objs_sliced, objs_target)):
-        match = re.match(recp, obj_t)
+    for idx, obj in enumerate(objs):
+        match = re.match(recp.rsplit('|', 1)[-1], obj + "_1")
         if match is not None:
             dist = objs_dists[idx]
             if dist < dist_to_recp:
-                recp_obj_id = obj_t
+                recp_obj_id = obj
                 dest_obj_center = objs_center[idx]
                 dist_to_recp = dist
 
@@ -553,10 +551,10 @@ def PutSlicedObject(robot, put_obj, recp):
     #     recp_obj_id = recp_id
     # GoToObject(robot, recp_obj_id)
     # time.sleep(1)
-    print("Putting In: ", recp_obj_id, dest_obj_center)
-    write_log("[Putting In]", f"{recp_obj_id} {dest_obj_center}")
+    print("Putting In Sliced: ", recp_obj_id, dest_obj_center)
+    write_log("[Putting In Sliced]", f"{recp_obj_id} {dest_obj_center}")
 
-    action_queue.append({'action': 'PutSlicedObject', 'objectId': recp_obj_id, 'agent_id': agent_id})
+    action_queue.append({'action': 'PutObject', 'objectId': recp_obj_id, 'agent_id': agent_id})
     time.sleep(1)
 
 
@@ -750,64 +748,29 @@ def ThrowObject(robot, sw_obj):
 
 ### TEST CASES 1
 
-def slice_bread(robots):
-    # 0: SubTask 1: Slice bread.
-    # 1: Go to the knife.
+def test(robots):
     GoToObject(robots, 'Knife')
-    # 2: Pick up the knife.
     PickupObject(robots, 'Knife')
-    # 3: Go to the bread.
-    GoToObject(robots, 'Bread')
-    # 4: Slice the bread.
-    SliceObject(robots, 'Bread')
-    # 5: Go to the countertop.
+    GoToObject(robots, 'Lettuce')
+    SliceObject(robots, 'Lettuce')
+
+    # print(c.last_event.metadata['objects'])
+
     GoToObject(robots, 'CounterTop')
-    # 6: Put the knife back on the CounterTop.
     PutObject(robots, 'Knife', 'CounterTop')
+    PickupSlicedObject(robots, 'LettuceSliced')
 
-    PickupSlicedObject(robots, 'BreadSliced_1')
-
-    print(c.last_event.metadata['objects'])
-
-    PutSlicedObject(robots, 'BreadSliced_1', 'Toaster')
-    SwitchOn(robots, 'Toaster')
-    time.sleep(5)
-    SwitchOff(robots, 'Toaster')
-    PickupSlicedObject(robots, 'BreadSliced_1')
     GoToObject(robots, 'Plate')
-    PutSlicedObject(robots, 'BreadSliced_1', 'Plate')
+    PutSlicedObject(robots, 'LettuceSliced', 'Plate')
+    # SwitchOn(robots, 'Toaster')
+    # time.sleep(5)
+    # SwitchOff(robots, 'Toaster')
+    # PickupSlicedObject(robots, 'BreadSliced_1')
+    # GoToObject(robots, 'Plate')
+    # PutSlicedObject(robots, 'BreadSliced_1', 'Plate')
 
-    print(c.last_event.metadata['objects'])
 
-# def toast_bread(robots):
-#     # 0: Subtask 2: Toast the sliced bread.
-#     # 1: Go to the sliced bread.
-#     GoToObject(robots, 'BreadSliced')
-#     # 2: Pick up the sliced bread.
-#     PickupObject(robots, 'BreadSliced')
-#     # 3: Go to the toaster.
-#     GoToObject(robots, 'Toaster')
-#     # 4: Put sliced bread in to the toaster.
-#     PutObject(robots, 'BreadSliced', 'Toaster')
-#     # 5: Switch on the toaster.
-#     SwitchOn(robots, 'Toaster')
-#     # 6: Wait for a while to let the sliced bread cooked.
-#     time.sleep(5)
-#     # 7: Switch off the toaster.
-#     SwitchOff(robots, 'Toaster')
-#
-# def serve_toast_on_plate(robots):
-#     # 0: Subtask 3: Serve the toast on a plate.
-#     # 1: Go to the toaster.
-#     GoToObject(robots, 'Toaster')
-#     # 2: Pick up the toast.
-#     PickupObject(robots, 'BreadSliced')
-#     # 3: Go to the plate.
-#     GoToObject(robots, 'Plate')
-#     # 4: Put the toast on a plate
-#     PutObject(robots, 'BreadSliced', 'Plate')
-
-task1_thread = threading.Thread(target=slice_bread, args=(robots[0],))
+task1_thread = threading.Thread(target=test, args=(robots[0],))
 task1_thread.start()
 task1_thread.join()
 
