@@ -48,20 +48,18 @@ def generate_video(input_path, prefix, char_id=0, image_synthesis=['normal'], fr
             print("Video generated at ", '{}/video_{}.mp4'.format(output_path, vid_mod))
 
 
-# robots = [{'name': 'robot1',
-#            'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'BreakObject', 'SliceObject', 'SwitchOn', 'SwitchOff',
-#                       'PickupObject', 'PutObject', 'DropHandObject', 'ThrowObject', 'PushObject', 'PullObject']},
-#           {'name': 'robot2',
-#            'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'BreakObject', 'SliceObject', 'SwitchOn', 'SwitchOff',
-#                       'PickupObject', 'PutObject', 'DropHandObject', 'ThrowObject', 'PushObject', 'PullObject']}]
+robots = [
+    {'name': 'robot1',
+     'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'BreakObject', 'SliceObject', 'SwitchOn', 'SwitchOff',
+                'PickupObject', 'PutObject', 'DropHandObject', 'ThrowObject', 'PushObject', 'PullObject'], 'mass': 100},
+    {'name': 'robot2',
+     'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'BreakObject', 'SliceObject', 'SwitchOn', 'SwitchOff',
+                'PickupObject', 'PutObject', 'DropHandObject', 'ThrowObject', 'PushObject', 'PullObject'], 'mass': 100}
+]
 
-robots = [{'name': 'robot1', 'skills': ['GoToObject', 'BackCharge', 'DeliverTask', 'OpenObject', 'CloseObject'], 'mass': 100},
-          {'name': 'robot2', 'skills': ['GoToObject', 'BackCharge', 'OpenObject', 'CloseObject', 'PickupObject',
-                                       'PutObject', 'SwitchOn', 'SwitchOff', 'PushObject', 'PullObject'], 'mass': 100}]
+floor_no = 6
 
-floor_no = 211
-
-c = Controller(height=1000, width=1000)
+c = Controller(height=720, width=720)
 c.reset("FloorPlan" + str(floor_no))
 no_robot = len(robots)
 
@@ -411,133 +409,9 @@ def CleanObject(robot, sw_obj):
 
     action_queue.append({'action': 'CleanObject', 'objectId': sw_obj_id, 'agent_id': agent_id})
 
-
-def GuideGuest(robots, dest_obj):
-    global recp_id
-
-    # check if robots is a list
-
-    if not isinstance(robots, list):
-        # convert robot to a list
-        robots = [robots]
-    no_agents = len (robots)
-    # robots distance to the goal
-    dist_goals = [10.0] * len(robots)
-    prev_dist_goals = [10.0] * len(robots)
-    count_since_update = [0] * len(robots)
-    clost_node_location = [0] * len(robots)
-
-    # list of objects in the scene and their centers
-    objs = list([obj["objectId"] for obj in c.last_event.metadata["objects"]])
-    objs_center = list([obj["axisAlignedBoundingBox"]["center"] for obj in c.last_event.metadata["objects"]])
-    if "|" in dest_obj:
-        # obj alredy given
-        dest_obj_id = dest_obj
-        pos_arr = dest_obj_id.split("|")
-        dest_obj_center = {'x': float(pos_arr[1]), 'y': float(pos_arr[2]), 'z': float(pos_arr[3])}
-    else:
-        for idx, obj in enumerate(objs):
-
-            match = re.match(dest_obj, obj)
-            if match is not None:
-                dest_obj_id = obj
-                dest_obj_center = objs_center[idx]
-                if dest_obj_center != {'x': 0.0, 'y': 0.0, 'z': 0.0}:
-                    break # find the first instance
-
-    print ("Guide to ", dest_obj_id, dest_obj_center)
-    # write_log("[Guide To]", f"{dest_obj_id} {dest_obj_center}")
-
-    dest_obj_pos = [dest_obj_center['x'], dest_obj_center['y'], dest_obj_center['z']]
-
-    # closest reachable position for each robot
-    # all robots cannot reach the same spot
-    # differt close points needs to be found for each robot
-    crp = closest_node(dest_obj_pos, reachable_positions, no_agents, clost_node_location)
-
-    goal_thresh = 0.25
-    # at least one robot is far away from the goal
-
-    while all(d > goal_thresh for d in dist_goals):
-        for ia, robot in enumerate(robots):
-            robot_name = robot['name']
-            agent_id = int(robot_name[-1]) - 1
-
-            # get the pose of robot
-            metadata = c.last_event.events[agent_id].metadata
-            location = {
-                "x": metadata["agent"]["position"]["x"],
-                "y": metadata["agent"]["position"]["y"],
-                "z": metadata["agent"]["position"]["z"],
-                "rotation": metadata["agent"]["rotation"]["y"],
-                "horizon": metadata["agent"]["cameraHorizon"]}
-
-            prev_dist_goals[ia] = dist_goals[ia] # store the previous distance to goal
-            dist_goals[ia] = distance_pts([location['x'], location['y'], location['z']], crp[ia])
-
-            dist_del = abs(dist_goals[ia] - prev_dist_goals[ia])
-            # print (ia, "Dist to Goal: ", dist_goals[ia], dist_del, clost_node_location[ia])
-            if dist_del < 0.2:
-                # robot did not move
-                count_since_update[ia] += 1
-            else:
-                # robot moving
-                count_since_update[ia] = 0
-
-            if count_since_update[ia] < 8:
-                action_queue.append \
-                    ({'action' :'ObjectNavExpertAction', 'position' :dict(x=crp[ia][0], y=crp[ia][1], z=crp[ia][2]), 'agent_id' :agent_id})
-            else:
-                # updating goal
-                clost_node_location[ia] += 1
-                count_since_update[ia] = 0
-                crp = closest_node(dest_obj_pos, reachable_positions, no_agents, clost_node_location)
-
-            time.sleep(0.5)
-
-    # align the robot once goal is reached
-    # compute angle between robot heading and object
-    metadata = c.last_event.events[agent_id].metadata
-    robot_location = {
-        "x": metadata["agent"]["position"]["x"],
-        "y": metadata["agent"]["position"]["y"],
-        "z": metadata["agent"]["position"]["z"],
-        "rotation": metadata["agent"]["rotation"]["y"],
-        "horizon": metadata["agent"]["cameraHorizon"]}
-
-    robot_object_vec = [dest_obj_pos[0] -robot_location['x'], dest_obj_pos[2] - robot_location['z']]
-    y_axis = [0, 1]
-    unit_y = y_axis / np.linalg.norm(y_axis)
-    unit_vector = robot_object_vec / np.linalg.norm(robot_object_vec)
-
-    angle = math.atan2(np.linalg.det([unit_vector, unit_y]), np.dot(unit_vector, unit_y))
-    angle = 360 * angle / (2 * np.pi)
-    angle = (angle + 360) % 360
-    rot_angle = angle - robot_location['rotation']
-
-    if rot_angle > 0:
-        action_queue.append({'action': 'RotateRight', 'degrees': abs(rot_angle), 'agent_id': agent_id})
-    else:
-        action_queue.append({'action': 'RotateLeft', 'degrees': abs(rot_angle), 'agent_id': agent_id})
-
-    print("Reached: ", dest_obj)
-    # write_log("[Reached]", dest_obj)
-    if dest_obj == "Cabinet" or dest_obj == "Fridge" or dest_obj == "CounterTop":
-        recp_id = dest_obj_id
-
-
-def Conversation(robot, message):
-    print("Speaking: ", message)
-    # write_log("[Speaking]", message)
-
-    robot_name = robot['name']
-    agent_id = int(robot_name[-1]) - 1
-
-    action_queue.append({'action': 'Conversation', 'agent_id': agent_id})
-    time.sleep(1)
-
-
 # LLM Generated Code
+
+# # # TEST 1
 
 # def wash_apple(robot):
 #     # 0: Task 1: Wash the Apple
@@ -669,34 +543,114 @@ def Conversation(robot, message):
 # action_queue.append({'action': 'Done'})
 # action_queue.append({'action': 'Done'})
 
-def guide_guest_to_sofa(robot):
-    # 0: Subtask 2: Guide guest to the sofa
-    # 1: Give welcoming message to the guest.
-    Conversation(robot, 'Welcome! Please follow me!')
-    # 2: Guide guest to the sofa.
-    GoToObject(robot, 'Sofa')
+# # # TEST 2
 
+# def guide_guest_to_sofa(robot):
+#     # 0: Subtask 2: Guide guest to the sofa
+#     # 1: Give welcoming message to the guest.
+#     Conversation(robot, 'Welcome! Please follow me!')
+#     # 2: Guide guest to the sofa.
+#     GoToObject(robot, 'Sofa')
+#
+#
+# def turn_off_floor_lamp(robot):
+#     # 0: Subtask 3: Turn on television
+#     # 1: Go to the television
+#     GoToObject(robot, 'FloorLamp')
+#     # 2: Turn on the television
+#     SwitchOff(robot, 'FloorLamp')
+#
+#
+# # Assign Task1 to robot1 since it has all the skills to perform actions in Task 1
+# task1_thread = threading.Thread(target=guide_guest_to_sofa, args=(robots[0],))
+# # Assign Task2 to robot2 since it has all the skills to perform actions in Task 2
+# task2_thread = threading.Thread(target=turn_off_floor_lamp, args=(robots[1],))
+#
+# # Start executing Task 3 and Task 4 in parallel
+# task1_thread.start()
+# task2_thread.start()
+#
+# # Wait for both Task 3 and Task 4 to finish
+# task1_thread.join()
+# task2_thread.join()
 
-def turn_off_floor_lamp(robot):
-    # 0: Subtask 3: Turn on television
-    # 1: Go to the television
-    GoToObject(robot, 'FloorLamp')
-    # 2: Turn on the television
-    SwitchOff(robot, 'FloorLamp')
+# # # TEST 3
 
+def slice_bread(robots):
+    # 0: SubTask 1: Slice bread.
+    # 1: Go to the knife.
+    GoToObject(robots, 'Knife')
+    # 2: Pick up the knife.
+    PickupObject(robots, 'Knife')
+    # 3: Go to the bread.
+    GoToObject(robots, 'Bread')
+    # 4: Slice the bread.
+    SliceObject(robots, 'Bread')
+    # 5: Go to the countertop.
+    GoToObject(robots, 'CounterTop')
+    # 6: Put the knife back on the CounterTop.
+    PutObject(robots, 'Knife', 'CounterTop')
 
-# Assign Task1 to robot1 since it has all the skills to perform actions in Task 1
-task1_thread = threading.Thread(target=guide_guest_to_sofa, args=(robots[0],))
-# Assign Task2 to robot2 since it has all the skills to perform actions in Task 2
-task2_thread = threading.Thread(target=turn_off_floor_lamp, args=(robots[1],))
+    # 0: Subtask 2: Toast the sliced bread.
+    # 1: Go to the sliced bread.
+    GoToObject(robots, 'Bread_0_Slice_1')
+    # 2: Pick up the sliced bread.
+    PickupObject(robots, 'Bread_0_Slice_1')
+    # 3: Go to the toaster.
+    GoToObject(robots, 'Toaster')
+    # 4: Put sliced bread in to the toaster.
+    PutObject(robots, 'Bread_0_Slice_1', 'Toaster')
+    # 5: Switch on the toaster.
+    SwitchOn(robots, 'Toaster')
+    # 6: Wait for a while to let the sliced bread cooked.
+    time.sleep(5)
+    # 7: Switch off the toaster.
+    SwitchOff(robots, 'Toaster')
+#
+# def toast_bread(robots):
+#     # 0: Subtask 2: Toast the sliced bread.
+#     # 1: Go to the sliced bread.
+#     GoToObject(robots, 'BreadSliced')
+#     # 2: Pick up the sliced bread.
+#     PickupObject(robots, 'BreadSliced')
+#     # 3: Go to the toaster.
+#     GoToObject(robots, 'Toaster')
+#     # 4: Put sliced bread in to the toaster.
+#     PutObject(robots, 'BreadSliced', 'Toaster')
+#     # 5: Switch on the toaster.
+#     SwitchOn(robots, 'Toaster')
+#     # 6: Wait for a while to let the sliced bread cooked.
+#     time.sleep(5)
+#     # 7: Switch off the toaster.
+#     SwitchOff(robots, 'Toaster')
+#
+# def serve_toast_on_plate(robots):
+#     # 0: Subtask 3: Serve the toast on a plate.
+#     # 1: Go to the toaster.
+#     GoToObject(robots, 'Toaster')
+#     # 2: Pick up the toast.
+#     PickupObject(robots, 'BreadSliced')
+#     # 3: Go to the plate.
+#     GoToObject(robots, 'Plate')
+#     # 4: Put the toast on a plate
+#     PutObject(robots, 'BreadSliced', 'Plate')
 
-# Start executing Task 3 and Task 4 in parallel
+task1_thread = threading.Thread(target=slice_bread, args=(robots[0],))
 task1_thread.start()
-task2_thread.start()
-
-# Wait for both Task 3 and Task 4 to finish
 task1_thread.join()
-task2_thread.join()
+
+# task1_thread = threading.Thread(target=slice_bread, args=(robots[0],))
+# task2_thread = threading.Thread(target=toast_bread, args=(robots[1],))
+# task3_thread = threading.Thread(target=serve_toast_on_plate, args=(robots[1],))
+#
+# task1_thread.start()
+# task1_thread.join()
+#
+# task2_thread.start()
+# task2_thread.join()
+#
+# task3_thread.start()
+# task3_thread.join()
 
 action_queue.append({'action': 'Done'})
 action_queue.append({'action': 'Done'})
