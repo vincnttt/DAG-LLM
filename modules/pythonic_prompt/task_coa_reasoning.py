@@ -13,3 +13,7 @@
 # EXAMPLE 4
 # Task Description: Make a french fries.
 # Task Understanding: Slice the potato, fry the sliced potato, then serve it on a plate.
+
+# EXAMPLE 5
+# Task Description: Make a toast.
+# Task Understanding: Slice a bread, toast the sliced bread, then serve it on a plate.
