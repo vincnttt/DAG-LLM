@@ -1,0 +1,1 @@
+{"task": "Make the room dark", "robot list": [2,3], "object_states": [{"name": "LightSwitch", "contains": [], "state": "OFF"}, {"name": "FloorLamp", "contains": [], "state": "OFF"}], "trans": 0, "max_trans": 0}
