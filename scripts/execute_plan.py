@@ -1,7 +1,10 @@
 import os
-from pathlib import Path
+import ast
 import subprocess
 import argparse
+
+from pathlib import Path
+from collections import deque, defaultdict
 
 
 def append_trans_ctr(allocated_plan):
@@ -14,6 +17,59 @@ def append_trans_ctr(allocated_plan):
             brk_ctr += 1
     print("No Breaks: ", brk_ctr)
     return brk_ctr
+
+
+def analyze_python_file(file_path):
+    # Read the contents of the file
+    with open(file_path, "r") as f:
+        source_code = f.read()
+
+    # Parse the source code into an AST
+    tree = ast.parse(source_code)
+
+    # Find all function definitions in the file
+    functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)]
+
+    # Analyze each function
+    results = {}
+    for func in functions:
+        func_name = func.name  # Get the name of the function
+        num_statements = len(func.body)  # Count the number of statements in the function body
+        results[func_name] = num_statements
+
+    return results
+
+
+def allocate_tasks(dag, task_steps, num_robots):
+    # Step 1: Calculate in-degrees for topological sorting
+    in_degree = {node: 0 for node in dag}
+    for node in dag:
+        for dependent in dag[node]:
+            in_degree[dependent] += 1
+
+    # Step 2: Perform topological sorting (Kahn's Algorithm)
+    topo_sort = []
+    queue = deque([node for node in dag if in_degree[node] == 0])
+
+    while queue:
+        current = queue.popleft()
+        topo_sort.append(current)
+        for neighbor in dag[current]:
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)
+
+    # Step 3: Allocate tasks to robots
+    robot_load = [0] * num_robots  # Track workload (steps) for each robot
+    allocation = defaultdict(list)  # Track task assignments per robot
+
+    for task in topo_sort:
+        # Assign task to the robot with the least workload
+        robot_id = robot_load.index(min(robot_load))
+        allocation[robot_id].append(task)
+        robot_load[robot_id] += task_steps[task]
+
+    return allocation
 
 
 def compile_aithor_exec_file(expt_name):

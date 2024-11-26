@@ -59,10 +59,13 @@ def serve_potato_on_plate():
 
 # DIRECTED ACYCLIC GRAPH (DAG) Task Allocation
 # For better task allocation, first we need to design DAG:
-dag = {
-    1: [2],     # Subtask 1 -> Subtask 2
-    2: [3]      # Subtask 1 -> Subtask 2
-}
+# slice_potato()
+#       |
+#       V
+# fry_potato()
+#       |
+#       V
+# serve_potato_on_plate()
 # Now, implement the task allocation based from above DAG.
 
 # Execute Subtask 1 first
@@ -140,23 +143,22 @@ def serve_potato_on_plate(robots):
 
 # DIRECTED ACYCLIC GRAPH (DAG) Robot Allocation
 # For better robot allocation based from given subtask and robot that fulfill the skill requirements, DAG are required:
-dag = {
-    1: [2],     # Subtask 1 -> Subtask 2
-    2: [3]      # Subtask 1 -> Subtask 2
-}
-
-# Number of total robots that meet requirements:
-# Robot 2, Robot 3
-qualified_robots = [1,2]    # By index
+# slice_potato(robots[1])
+#           |
+#           V
+# fry_potato(robots[1])
+#           |
+#           V
+# serve_potato_on_plate(robots[2])
 
 # Execute Subtask 1 first
-slice_potato()
+slice_potato([robots[1]])
 
 # After Subtask 1 done, execute Subtask 2
-fry_potato()
+fry_potato([robots[1]])
 
 # Execute Subtask 3 when all Subtask 2 is done.
-serve_potato_on_plate()
+serve_potato_on_plate([robots[2]])
 
 
 
@@ -164,14 +166,12 @@ serve_potato_on_plate()
 # Task Understanding: Put the laptop, book, and pen to the coffee table.
 # GENERAL TASK DECOMPOSITION
 # Independent subtasks:
-# Subtask 1: Put the laptop to the coffee table. (Skills required: GoToObject, PickupObject, PutObject)
-# Subtask 2: Put the book to the coffee table. (Skills required: GoToObject, PickupObject, PutObject)
-# Subtask 3: Put the pen to the coffee table. (Skills required: GoToObject, PickupObject, PutObject)
-# We can directly execute the Subtask 1 and Subtask 2 parallely, then when Subtask 2 is done, execute Subtask 3.
+# Subtask 1: Put the laptop, book, and pen to the coffee table. (Skills required: GoToObject, PickupObject, PutObject)
+# We can directly execute the Subtask 1.
 
 # CODE
-def put_laptop_to_coffee_table():
-    # 0: Subtask 1: Put the laptop to the coffee table.
+def put_things_to_coffee_table():
+    # 0: Subtask 1: Put the laptop, book, and pen to the coffee table.
     # 1: Go to the laptop.
     GoToObject('Laptop')
     # 2: Pick up the laptop.
@@ -180,52 +180,30 @@ def put_laptop_to_coffee_table():
     GoToObject('CoffeeTable')
     # 4: Put the laptop to the coffee table.
     PutObject('Laptop', 'CoffeeTable')
-
-def put_book_to_coffee_table():
-    # 0: Subtask 2: Put the book to the coffee table.
-    # 1: Go to the book.
+    # 5: Go to the book.
     GoToObject('Book')
-    # 2: Pick up the book.
+    # 6: Pick up the book.
     PickupObject('Book')
-    # 3: Go to the coffee table.
+    # 7: Go to the coffee table.
     GoToObject('CoffeeTable')
-    # 4: Put the book to the coffee table.
+    # 8: Put the book to the coffee table.
     PutObject('Book', 'CoffeeTable')
-
-def put_pen_to_coffee_table():
-    # 0: Subtask 3: Put the pen to the coffee table.
-    # 1: Go to the pen.
+    # 9: Go to the pen.
     GoToObject('Pen')
-    # 2: Pick up the pen.
+    # 10: Pick up the pen.
     PickupObject('Pen')
-    # 3: Go to the coffee table.
+    # 11: Go to the coffee table.
     GoToObject('CoffeeTable')
-    # 4: Put the pen to the coffee table.
+    # 12: Put the pen to the coffee table.
     PutObject('Pen', 'CoffeeTable')
 
 # DIRECTED ACYCLIC GRAPH (DAG) Task Allocation
 # For better task allocation, first we need to design DAG:
-dag = {
-    1: [],      # Subtask 1
-    2: [],      # Subtask 2
-    3: [2]      # Subtask 3 -> Subtask 2
-}
+# put_things_to_coffee_table()
 # Now, implement the task allocation based from above DAG.
 
-# Parallelize SubTask 1 and SubTask 2
-task1_thread = threading.Thread(target=put_laptop_to_coffee_table)
-task2_thread = threading.Thread(target=put_book_to_coffee_table)
-
-# Start executing Subtask 1 and Subtask 2 in parallel.
-task1_thread.start()
-task2_thread.start()
-
-# Ensure Subtask 2 done before execute Subtask 3.
-task2_thread.join()
-put_pen_to_coffee_table()
-
-# Ensure if Subtask 1 is done
-task1_thread.join()
+# Execute subtask 1.
+put_things_to_coffee_table()
 
 # TASK ALLOCATION
 robots = [
@@ -236,71 +214,54 @@ robots = [
 # SOLUTION
 # All the robots DO NOT share the same set and number (no_skills) of skills. In this case where all robots have different sets of skills - Focus on Task Allocation based on Robot Skills alone.
 # Analyze the skills required for each subtask and the skills each robot possesses. In this scenario, we have one main subtasks: 'Put things to the coffee table'.
-# For the 'Put the laptop to the coffee table' subtask, it requires 'GoToObject', 'PickupObject', and 'PutObject' skills. In this case Robot 2 and Robot 3 has all these skills.
-# For the 'Put the book to the coffee table' subtask, it requires 'GoToObject', 'PickupObject', and 'PutObject' skills. In this case Robot 2 and Robot 3 has all these skills.
-# For the 'Put the pen to the coffee table' subtask, it requires 'GoToObject', 'PickupObject', and 'PutObject' skills. In this case Robot 2 and Robot 3 has all these skills.
-# Although some of the subtask can be assigned by two or more robot, but it also needs to be allocated based on availability of current robot.
-
-# CODE Solution
-def put_laptop_to_coffee_table(robots):
-    # 0: Subtask 1: Put the laptop to the coffee table.
-    # 1: Go to the laptop.
-    GoToObject(robots, 'Laptop')
-    # 2: Pick up the laptop.
-    PickupObject(robots, 'Laptop')
-    # 3: Go to the coffee table.
-    GoToObject(robots, 'CoffeeTable')
-    # 4: Put the laptop to the coffee table.
-    PutObject(robots, 'Laptop', 'CoffeeTable')
-
-def put_book_to_coffee_table(robots):
-    # 0: Subtask 2: Put the book to the coffee table.
-    # 1: Go to the book.
-    GoToObject(robots, 'Book')
-    # 2: Pick up the book.
-    PickupObject(robots, 'Book')
-    # 3: Go to the coffee table.
-    GoToObject(robots, 'CoffeeTable')
-    # 4: Put the book to the coffee table.
-    PutObject(robots, 'Book', 'CoffeeTable')
-
-def put_pen_to_coffee_table(robots):
-    # 0: Subtask 3: Put the pen to the coffee table.
-    # 1: Go to the pen.
-    GoToObject(robots, 'Pen')
-    # 2: Pick up the pen.
-    PickupObject(robots, 'Pen')
-    # 3: Go to the coffee table.
-    GoToObject(robots, 'CoffeeTable')
-    # 4: Put the pen to the coffee table.
-    PutObject(robots, 'Pen', 'CoffeeTable')
+# For the 'Slice Potato' subtask, it requires 'GoToObject', 'PickupObject', and 'PutObject' skills. In this case Robot 2 and Robot 3 has all these skills.
+# Based from explanation above, team of robots may be required, because Robot 2 and Robot 3 has meet the skills requirements and it also will make the subtask finished in shorter amount of time.
+# From subtask 1, we can design sub-subtask decomposition:
+# Sub-subtask 1: Put the laptop to coffee table.
+# Sub-subtask 2: Put the book to coffee table.
+# Sub-subtask 3: Put the pen to coffee table.
+# Assign Sub-subtask 1 for Robot 2, assign Sub-subtask 2 for Robot 3, then wait for Robot 2 finishing the Sub-subtask 1 before assigning the Sub-subtask 3.
 
 # DIRECTED ACYCLIC GRAPH (DAG) Robot Allocation
 # For better robot allocation based from given subtask and robot that fulfill the skill requirements, DAG are required:
-dag = {
-    1: [],      # Subtask 1
-    2: [],      # Subtask 2
-    3: [2]      # Subtask 3 -> Subtask 2
-}
+# Put the laptop sub-subtask(robots[1])     Put the book sub-subtask(robots[2])
+#                   |                                       |
+#                   V                                       |
+# put the pen sub-subtask(robots[1]) <----------------------|
 
-# Number of total robots that meet requirements:
-# Robot 2, Robot 3
-qualified_robots = [1,2]    # By index
+# CODE Solution
+def put_things_to_coffee_table(robots):
+    # 0: Subtask 1: Put the laptop, book, and pen to the coffee table.
+    # 1: Sub-subtask 1: Put the laptop to coffee table.
+    # 2: Go to the laptop.
+    GoToObject(robots[1], 'Laptop')
+    # 3: Pick up the laptop.
+    PickupObject(robots[1], 'Laptop')
+    # 4: Go to the coffee table.
+    GoToObject(robots[1], 'CoffeeTable')
+    # 5: Put the laptop to the coffee table.
+    PutObject(robots[1], 'Laptop', 'CoffeeTable')
+    # 6: Sub-subtask2: Put the book to coffee table.
+    # 7: Go to the book.
+    GoToObject(robots[2], 'Book')
+    # 8: Pick up the book.
+    PickupObject(robots[2], 'Book')
+    # 9: Go to the coffee table.
+    GoToObject(robots[2], 'CoffeeTable')
+    # 10: Put the book to the coffee table.
+    PutObject(robots[2], 'Book', 'CoffeeTable')
+    # 11: Sub-subtask 3: Put the pen to coffee table.
+    # 12: Go to the pen.
+    GoToObject(robots[1], 'Pen')
+    # 13: Pick up the pen.
+    PickupObject(robots[1], 'Pen')
+    # 14: Go to the coffee table.
+    GoToObject(robots[1], 'CoffeeTable')
+    # 15: Put the pen to the coffee table.
+    PutObject(robots[1], 'Pen', 'CoffeeTable')
 
-# Parallelize SubTask 1 and SubTask 2
-task1_thread = threading.Thread(target=put_laptop_to_coffee_table)
-task2_thread = threading.Thread(target=put_book_to_coffee_table)
-
-# Start executing Subtask 1 and Subtask 2 in parallel.
-task1_thread.start()
-task2_thread.start()
-
-# Ensure Subtask 2 done before execute Subtask 3.
-task2_thread.join()
-put_pen_to_coffee_table()
-
-# Ensure if Subtask 1 is done
-task1_thread.join()
+# Execute Subtask 1.
+put_things_to_coffee_table([robots[1], robots[2]])
 
 
 
@@ -390,8 +351,8 @@ robots = [
 # All the robots DO NOT share the same set and number (no_skills) of skills. In this case where all robots have different sets of skills - Focus on Task Allocation based on Robot Skills alone.
 # Analyze the skills required for each subtask and the skills each robot possesses. In this scenario, we have four main subtasks: 'Slice bread', 'Toast the sliced bread' and 'Serve the toast on a plate'.
 # For the 'Slice bread' subtask, it requires 'GoToObject', 'PickupObject', 'PutObject', and 'SliceObject'. In this case Robot 1 and Robot 2 has all these skills.
-# For the 'Toast the sliced bread' subtask, it requires 'GoToObject', 'PickupObject', 'PutObject', 'SwitchOn', and 'SwitchOff'. In this case Robot 1 and Robot 2 has all these skills.
-# For the 'Serve the toast on a plate' subtask, it requires 'GoToObject', 'PickupObject', and 'PutObject'. In this case Robot 1 and Robot 2 has all these skills.
+# For the 'Slice bread' subtask, it requires 'GoToObject', 'PickupObject', 'PutObject', 'SwitchOn', and 'SwitchOff'. In this case Robot 1 and Robot 2 has all these skills.
+# For the 'Slice bread' subtask, it requires 'GoToObject', 'PickupObject', and 'PutObject'. In this case Robot 1 and Robot 2 has all these skills.
 # As from above solution, all subtasks can be done by Robot 1 and Robot 2, in this case we can allocate the robot based from its condition and the availability of current robot, also take care to the dependency of each subtask.
 
 # CODE Solution
