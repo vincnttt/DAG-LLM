@@ -13,6 +13,7 @@ from collections import deque
 import random
 import os
 from glob import glob
+from collections import deque, defaultdict
 
 
 def closest_node(node, nodes, no_robot, clost_node_location):
@@ -306,6 +307,121 @@ def GoToObject(robots, dest_obj):
         for idx, obj in enumerate(objs):
 
             match = re.match(dest_obj, obj)
+            if match is not None:
+                dest_obj_id = obj
+                dest_obj_center = objs_center[idx]
+                if dest_obj_center != {'x': 0.0, 'y': 0.0, 'z': 0.0}:
+                    break # find the first instance
+
+    print ("Going to ", dest_obj_id, dest_obj_center)
+    write_log("[Going To]", f"{dest_obj_id} {dest_obj_center}")
+
+    dest_obj_pos = [dest_obj_center['x'], dest_obj_center['y'], dest_obj_center['z']]
+
+    # closest reachable position for each robot
+    # all robots cannot reach the same spot
+    # differt close points needs to be found for each robot
+    crp = closest_node(dest_obj_pos, reachable_positions, no_agents, clost_node_location)
+
+    goal_thresh = 0.25
+    # at least one robot is far away from the goal
+
+    while all(d > goal_thresh for d in dist_goals):
+        for ia, robot in enumerate(robots):
+            robot_name = robot['name']
+            agent_id = int(robot_name[-1]) - 1
+
+            # get the pose of robot
+            metadata = c.last_event.events[agent_id].metadata
+            location = {
+                "x": metadata["agent"]["position"]["x"],
+                "y": metadata["agent"]["position"]["y"],
+                "z": metadata["agent"]["position"]["z"],
+                "rotation": metadata["agent"]["rotation"]["y"],
+                "horizon": metadata["agent"]["cameraHorizon"]}
+
+            prev_dist_goals[ia] = dist_goals[ia] # store the previous distance to goal
+            dist_goals[ia] = distance_pts([location['x'], location['y'], location['z']], crp[ia])
+
+            dist_del = abs(dist_goals[ia] - prev_dist_goals[ia])
+            # print (ia, "Dist to Goal: ", dist_goals[ia], dist_del, clost_node_location[ia])
+            if dist_del < 0.2:
+                # robot did not move
+                count_since_update[ia] += 1
+            else:
+                # robot moving
+                count_since_update[ia] = 0
+
+            if count_since_update[ia] < 8:
+                action_queue.append \
+                    ({'action' :'ObjectNavExpertAction', 'position' :dict(x=crp[ia][0], y=crp[ia][1], z=crp[ia][2]), 'agent_id' :agent_id})
+            else:
+                # updating goal
+                clost_node_location[ia] += 1
+                count_since_update[ia] = 0
+                crp = closest_node(dest_obj_pos, reachable_positions, no_agents, clost_node_location)
+
+            time.sleep(0.5)
+
+    # align the robot once goal is reached
+    # compute angle between robot heading and object
+    metadata = c.last_event.events[agent_id].metadata
+    robot_location = {
+        "x": metadata["agent"]["position"]["x"],
+        "y": metadata["agent"]["position"]["y"],
+        "z": metadata["agent"]["position"]["z"],
+        "rotation": metadata["agent"]["rotation"]["y"],
+        "horizon": metadata["agent"]["cameraHorizon"]}
+
+    robot_object_vec = [dest_obj_pos[0] -robot_location['x'], dest_obj_pos[2] - robot_location['z']]
+    y_axis = [0, 1]
+    unit_y = y_axis / np.linalg.norm(y_axis)
+    unit_vector = robot_object_vec / np.linalg.norm(robot_object_vec)
+
+    angle = math.atan2(np.linalg.det([unit_vector, unit_y]), np.dot(unit_vector, unit_y))
+    angle = 360 * angle / (2 * np.pi)
+    angle = (angle + 360) % 360
+    rot_angle = angle - robot_location['rotation']
+
+    if rot_angle > 0:
+        action_queue.append({'action': 'RotateRight', 'degrees': abs(rot_angle), 'agent_id': agent_id})
+    else:
+        action_queue.append({'action': 'RotateLeft', 'degrees': abs(rot_angle), 'agent_id': agent_id})
+
+    print("Reached: ", dest_obj)
+    write_log("[Reached]", dest_obj)
+    if dest_obj == "Cabinet" or dest_obj == "Fridge" or dest_obj == "CounterTop":
+        recp_id = dest_obj_id
+
+
+def GoToSlicedObject(robots, dest_obj):
+    global recp_id
+
+    # check if robots is a list
+    if not isinstance(robots, list):
+        # convert robot to a list
+        robots = [robots]
+    no_agents = len (robots)
+
+    # robots distance to the goal
+    dist_goals = [10.0] * len(robots)
+    prev_dist_goals = [10.0] * len(robots)
+    count_since_update = [0] * len(robots)
+    clost_node_location = [0] * len(robots)
+
+    # list of objects in the scene and their centers
+    objs = list([obj["objectId"] for obj in c.last_event.metadata["objects"]])
+    objs_center = list([obj["axisAlignedBoundingBox"]["center"] for obj in c.last_event.metadata["objects"]])
+    if "|" in dest_obj:
+        # obj alredy given
+        dest_obj_id = dest_obj
+        pos_arr = dest_obj_id.split("|")
+        dest_obj_center = {'x': float(pos_arr[1]), 'y': float(pos_arr[2]), 'z': float(pos_arr[3])}
+    else:
+        for idx, obj in enumerate(objs):
+
+            # match = re.match(dest_obj, obj)
+            match = re.match(dest_obj + "_1", obj.rsplit('|', 1)[-1])
             if match is not None:
                 dest_obj_id = obj
                 dest_obj_center = objs_center[idx]
@@ -746,33 +862,178 @@ def ThrowObject(robot, sw_obj):
     action_queue.append({'action': 'ThrowObject', 'objectId': sw_obj_id, 'agent_id': agent_id})
     time.sleep(1)
 
+
+def execute_tasks_in_parallel(tasks, dependencies, robot_task_map):
+    # Step 1: Build graph and in-degrees
+    graph = defaultdict(list)
+    in_degree = defaultdict(int)
+
+    for pre, nxt in dependencies:
+        graph[pre].append(nxt)
+        in_degree[nxt] += 1
+        if pre not in in_degree:
+            in_degree[pre] = 0  # Initialize if not already present
+
+    # Step 2: Calculate task levels
+    queue = deque([task for task in in_degree if in_degree[task] == 0])
+    task_level = {}
+    level = 0
+
+    while queue:
+        size = len(queue)
+        for _ in range(size):
+            current = queue.popleft()
+            task_level[current] = level
+            for neighbor in graph[current]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    queue.append(neighbor)
+        level += 1  # Increment level after processing one level of tasks
+
+    # Group tasks by level for parallel execution
+    level_tasks = defaultdict(list)
+    for task, lvl in task_level.items():
+        level_tasks[lvl].append(task)
+
+    # Step 3: Execute tasks using threads
+    # def run_task(task):
+    #     robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
+    #     print(f"Starting task {task} on {robot} index ")
+    #     # time.sleep(task_durations[task])  # Simulate task duration
+    #     print(f"Finished task {task} on {robot}")
+    #
+    # for lvl in sorted(level_tasks.keys()):
+    #     threads = []
+    #     print(f"Executing level {lvl} tasks in parallel: {level_tasks[lvl]}")
+    #     for task in level_tasks[lvl]:
+    #         print(run_task)
+    #         print(task)
+    #         # thread = threading.Thread(target=run_task, args=(task,))
+    #         thread = threading.Thread(target=run_task, args=(robots[],))
+    #         threads.append(thread)
+    #         thread.start()
+    #     for thread in threads:
+    #         thread.join()  # Wait for all tasks in the level to complete
+    #     print(f"Completed all level {lvl} tasks.\n")
+
+    def run_task(robot, task):
+        print(f"Starting task {task} on {robot}")
+        # time.sleep(task_durations[task])  # Simulate task duration
+        print(f"Finished task {task} on {robot}")
+
+    # Updated threading.Thread call inside the loop
+    for lvl in sorted(level_tasks.keys()):
+        threads = []
+        print(f"Executing level {lvl} tasks in parallel: {level_tasks[lvl]}")
+        for task in level_tasks[lvl]:
+            # Find the robot assigned to the current task
+            robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
+            thread = threading.Thread(target=globals()[task], args=(robots[robot],))
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()  # Wait for all tasks in the level to complete
+        print(f"Completed all level {lvl} tasks.\n")
+
+
 ### TEST CASES 1
 
-def test(robots):
-    GoToObject(robots, 'Knife')
-    PickupObject(robots, 'Knife')
-    GoToObject(robots, 'Lettuce')
-    SliceObject(robots, 'Lettuce')
+def turn_off_lights(robot):
+    # 0: Subtask 1: Turn off the lights.
+    # 1: Go to the light switch.
+    GoToObject(robot, 'LightSwitch')
+    # 2: Turn off the lights.
+    SwitchOff(robot, 'LightSwitch')
 
-    # print(c.last_event.metadata['objects'])
+def turn_off_floor_lamp(robot):
+    # 0: Subtask 2: Turn off the floor lamp.
+    # 1: Go to the floor lamp.
+    GoToObject(robot, 'FloorLamp')
+    # 2: Turn off the floor lamp.
+    SwitchOff(robot, 'FloorLamp')
 
-    GoToObject(robots, 'CounterTop')
-    PutObject(robots, 'Knife', 'CounterTop')
-    PickupSlicedObject(robots, 'LettuceSliced')
+def put_pen_to_drawer(robot):
+    GoToObject(robot, 'Pen')
+    PickupObject(robot, 'Pen')
+    OpenObject(robot, 'Drawer')
+    PutObject(robot, 'Pen', 'Drawer')
+    CloseObject(robot, 'Drawer')
 
-    GoToObject(robots, 'Plate')
-    PutSlicedObject(robots, 'LettuceSliced', 'Plate')
-    # SwitchOn(robots, 'Toaster')
-    # time.sleep(5)
-    # SwitchOff(robots, 'Toaster')
-    # PickupSlicedObject(robots, 'BreadSliced_1')
-    # GoToObject(robots, 'Plate')
-    # PutSlicedObject(robots, 'BreadSliced_1', 'Plate')
+subtasks = ["turn_off_lights", "turn_off_floor_lamp", "put_pen_to_drawer"]
+
+dependencies = [
+    ("turn_off_lights", "turn_off_floor_lamp"),
+    ("turn_off_floor_lamp", "put_pen_to_drawer"),
+]
+
+qualified_robot = {
+    "turn_off_lights": [0,1],    # Subtask slice_bread can be done by Robot 1 and Robot 2
+    "turn_off_floor_lamp": [0,1],    # Subtask toast_bread can be done by Robot 1 and Robot 2
+    "put_pen_to_drawer": [0,1]      # Subtask serve_toast_on_plate can be done by Robot 1 and Robot 2
+}
+
+# Step 1: Allocate tasks to robots
+def allocate_tasks_with_dependencies(tasks, dependencies, qualified_robot, robots):
+    # Build graph and perform topological sort as in previous implementation
+    graph = defaultdict(list)
+    in_degree = defaultdict(int)
+
+    for pre, nxt in dependencies:
+        graph[pre].append(nxt)
+        in_degree[nxt] += 1
+        if pre not in in_degree:
+            in_degree[pre] = 0
+
+    queue = deque([task for task in in_degree if in_degree[task] == 0])
+    topo_order = []
+
+    while queue:
+        current = queue.popleft()
+        topo_order.append(current)
+        for neighbor in graph[current]:
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)
+
+    task_allocation = {}
+
+    def can_assign(robot, task):
+        stack = [task]
+        visited = set()
+        while stack:
+            current = stack.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            if robot not in qualified_robot[current]:
+                return False
+            stack.extend(graph[current])
+        return True
+
+    def assign_task(task, robots):
+        for robot_index in robots:
+            if can_assign(robot_index, task):
+                task_allocation[task] = robot_index
+                return True
+        return False
+
+    for task in topo_order:
+        if not assign_task(task, qualified_robot[task]):
+            raise ValueError(f"Task {task} could not be assigned to any robot.")
+
+    robot_task_map = defaultdict(list)
+    for task, robot_index in task_allocation.items():
+        # robot_task_map[robots[robot_index]].append(task)
+        robot_task_map[robot_index].append(task)
+
+    return robot_task_map
 
 
-task1_thread = threading.Thread(target=test, args=(robots[0],))
-task1_thread.start()
-task1_thread.join()
+robot_task_map = allocate_tasks_with_dependencies(subtasks, dependencies, qualified_robot, robots)
+
+# Step 2: Execute tasks in parallel
+execute_tasks_in_parallel(subtasks, dependencies, robot_task_map)
+
 
 action_queue.append({'action': 'Done'})
 action_queue.append({'action': 'Done'})
