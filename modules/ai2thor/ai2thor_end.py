@@ -1,3 +1,24 @@
+
+def analyze_generated_function():
+    file_path = __file__
+
+    with open(file_path, "r") as f:
+        source_code = f.read()
+
+    tree = ast.parse(source_code)
+
+    functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)]
+
+    # Analyze each function
+    results = {}
+    for func in functions:
+        func_name = func.name  # Get the name of the function
+        num_statements = len(func.body)  # Count the number of statements in the function body
+        results[func_name] = num_statements
+
+    return results
+
+
 for i in range(25):
     action_queue.append({'action': 'Done'})
     action_queue.append({'action': 'Done'})
@@ -106,6 +127,6 @@ with open(f"{curr_path}/log.txt", 'a') as f:
     f.write(f"\n\n")
     f.write(f"no_trans_gt: {no_trans_gt}, max_trans: {max_trans}, no_trans: {no_trans}")
     f.write(f"\n")
-    f.write(f"SR:{sr}, TCR:{tc}, GCR:{gcr}, Exec:{exec}, RU:{ru}")
+    f.write(f"SR:{sr}, TCR:{tc}, GCR:{gcr}, RU:{ru}, Exec:{exec}")
 
 generate_video()
