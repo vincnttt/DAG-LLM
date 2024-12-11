@@ -39,7 +39,7 @@ def compile_aithor_exec_file(expt_name):
     max_trans = log_data[11][12:]
     executable_plan += ("max_trans = " + max_trans + "\n")
 
-    # append the ai thoe connector and helper fns
+    # append the AI to the connector and helper functions
     connector_file = Path(os.getcwd() + "/modules/ai2thor/ai2thor_connect.py").read_text()
     executable_plan += (connector_file + "\n")
 

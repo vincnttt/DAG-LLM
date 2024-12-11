@@ -136,8 +136,8 @@ if __name__ == '__main__':
     parser.add_argument("--prompt-reasoning-set", type=str, default="task_coa_reasoning",
                         choices=["task_coa_reasoning"])
 
-    parser.add_argument("--prompt-decompose-set", type=str, default="task_decompose",
-                        choices=["task_decompose"])
+    parser.add_argument("--prompt-decompose-set", type=str, default="task_decompose.py",
+                        choices=["task_decompose.py"])
 
     parser.add_argument("--prompt-allocation-set", type=str, default="task_allocation_dag",
                         choices=["task_allocation_dag"])
@@ -219,7 +219,7 @@ if __name__ == '__main__':
 
         # Pass to LLM
         messages = [
-            {"role": "system", "content": "You are an assistant who decomposes abstract instructions into specific, actionable steps. You can learn based from given examples, there is Task Description is abstract instruction, and Task Understanding is the specific actions to accomplish the goal. Some of objects can be heated, cooked, sliced or washed, you should make a decision, whether current task need the object being heated, cooked, sliced or washed."},
+            {"role": "system", "content": "You are an assistant who decomposes abstract instructions into specific, actionable steps. You can learn based from given examples, there is Task Description is abstract instruction, and Task Understanding is the specific actions to accomplish the goal. Some of objects can be heated, cooked, sliced or washed, you should make a decision, whether current task need the object being heated, cooked, sliced or washed. Of course, make sure that the object is available."},
             {"role": "user", "content": curr_prompt}
         ]
         _, text = llm(messages, args.llm, max_tokens=1500)
@@ -263,7 +263,8 @@ if __name__ == '__main__':
         if args.llm == "gpt-4o":
             messages = [
                 {"role": "system",
-                 "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are neccesary to make task allocation better, also you can sketch the graph for better visualization."},
+                 "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are necessary to make task allocation better."},
+                 # "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are necessary to make task allocation better, also you can sketch the graph for better visualization."},
                 {"role": "user", "content": curr_prompt}
             ]
             _, text = llm(messages, args.llm, max_tokens=1500)
@@ -271,7 +272,8 @@ if __name__ == '__main__':
         else:
             messages = [
                 {"role": "assistant",
-                 "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are neccesary to make task allocation better, also you can sketch the graph for better visualization."},
+                 "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are necessary to make task allocation better."},
+                 # "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are necessary to make task allocation better, also you can sketch the graph for better visualization."},
                 {"role": "user", "content": curr_prompt}
             ]
             _, text = llm(messages, args.llm, max_tokens=1500)
