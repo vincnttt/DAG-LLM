@@ -1,0 +1,3 @@
+{"task": "Turn on laptop, and put the watch in to the drawer, then turn off the floor lamp", "robot list": [2,4], "object_states": [{"name": "Laptop", "contains": [], "state": "ON"}, {"name": "Drawer", "contains": ["Watch"], "state": "None"}, {"name": "FloorLamp", "contains": [], "state": "OFF"}], "trans": 0, "max_trans": 0}
+{"task": "Put the newspaper and remote control to the coffee table, then turn on the television", "robot list": [1,3,7], "object_states": [{"name": "Television", "contains": [], "state": "ON"}], "trans": 0, "max_trans": 0}
+{"task": "Trash the vase and newspaper", "robot list": [1,10], "object_states": [{"name": "GarbageCan", "contains": ["Vase", "NewsPaper"], "state": "None"}], "trans": 0, "max_trans": 0}

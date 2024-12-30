@@ -1,5 +1,7 @@
 # EXAMPLE 1 - Task Description: Make the room dark.
 # Task Understanding: Turn off the lights and turn off the floor lamp.
+from modules.ai2thor.ai2thor_connect import GoToObject
+
 
 # GENERAL TASK DECOMPOSITION
 # Task Description are the given task, which is described in abstract way.
@@ -8,7 +10,6 @@
 # Independent subtasks:
 # Subtask 1: Turn off the lights. (Skills required: GoToObject, SwitchOn, SwitchOff)
 # Subtask 2: Turn off the floor lamp. (Skills required: GoToObject, SwitchOn, SwitchOff)
-# We can parallelize Subtask 1 and Subtask 2, because they don't depend on each other.
 
 # CODE
 def turn_off_lights():
@@ -25,20 +26,6 @@ def turn_off_floor_lamp():
     # 2: Turn off the floor lamp.
     SwitchOff('FloorLamp')
 
-# Parallelize Subtask 1 and Subtask 2
-task1_thread = threading.Thread(target=turn_off_lights)
-task2_thread = threading.Thread(target=turn_off_floor_lamp)
-
-# Start executing Subtask 1 and Subtask 2 in parallel.
-task1_thread.start()
-task2_thread.start()
-
-# Wait for both Subtask 1 and Subtask 2 to finish.
-task1_thread.join()
-task2_thread.join()
-
-# Task make the room dark is done.
-
 
 
 # EXAMPLE 2 - Task Description: Make a sandwich for breakfast.
@@ -53,7 +40,6 @@ task2_thread.join()
 # Subtask 2: Slice lettuce, tomato and bread. (Skills required: GoToObject, PickupObject, PutObject, SliceObject)
 # Subtask 3: Wash a plate. (Skills required: GoToObject, PickupObject, PutObject, SwitchOn, SwitchOff)
 # Subtask 4: Assemble the sandwich. (Skills required: GoToObject, PickupObject, PutObject)
-# We can parallelize the Subtask 1 and Subtask 2, and when Subtask 1 done execute Subtask 3, then execute Subtask 4.
 
 # CODE
 def cook_egg():
@@ -132,29 +118,29 @@ def wash_plate():
 def assemble_sandwich():
     # 0: SubTask 4: Assemble the Sandwich
     # 1: Go to the sliced bread.
-    GoToObject('BreadSliced')
+    GoToSlicedObject('BreadSliced')
     # 2: Pick up the sliced bread.
-    PickupObjectSliced('BreadSliced')
+    PickupSlicedObject('BreadSliced')
     # 3: Go to the plate.
     GoToObject('Plate')
     # 4: Place a slice of bread on the plate.
-    PutObjectSliced('BreadSliced', 'Plate')
-    # 5: Go to the lettuce.
-    GoToObject('LettuceSliced')
-    # 6: Pick up the lettuce.
-    PickupObjectSliced('LettuceSliced')
+    PutSlicedObject('BreadSliced', 'Plate')
+    # 5: Go to the sliced lettuce.
+    GoToSlicedObject('LettuceSliced')
+    # 6: Pick up the sliced lettuce.
+    PickupSlicedObject('LettuceSliced')
     # 7: Go to the plate.
     GoToObject('Plate')
     # 8: Place a slice of lettuce on the plate.
-    PutObjectSliced('LettuceSliced', 'Plate')
-    # 9: Go to the tomato.
-    GoToObject('TomatoSliced')
-    # 10: Pick up the tomato.
-    PickupObjectSliced('TomatoSliced')
+    PutSlicedObject('LettuceSliced', 'Plate')
+    # 9: Go to the sliced tomato.
+    GoToSlicedObject('TomatoSliced')
+    # 10: Pick up the sliced tomato.
+    PickupSlicedObject('TomatoSliced')
     # 11: Go to the plate.
     GoToObject('Plate')
     # 12: Place a slice of tomato on the plate.
-    PutObjectSliced('TomatoSliced', 'Plate')
+    PutSlicedObject('TomatoSliced', 'Plate')
     # 13: Go to the egg.
     GoToObject('Egg')
     # 14: Pick up the egg.
@@ -165,37 +151,16 @@ def assemble_sandwich():
     PutObject('Egg', 'Plate')
 
 
-# Parallelize SubTask 1 and SubTask 2
-task1_thread = threading.Thread(target=cook_egg)
-task2_thread = threading.Thread(target=slice_ingredients)
-
-# Start executing Subtask 1 and Subtask 2 in parallel.
-task1_thread.start()
-task2_thread.start()
-
-# Ensure Subtask 1 done before execute Subtask 3.
-task1_thread.join()
-wash_plate()
-
-# Wait for Subtask 2 done.
-task2_thread.join()
-
-# Execute Subtask 4 when all Subtask is done.
-assemble_sandwich()
-
-# Task make a sandwich for breakfast is done.
-
-
 
 # EXAMPLE 3 - Task Description: Prepare for the meeting.
 # Task Understanding: Put the laptop, book, and pen to the coffee table.
+
 # GENERAL TASK DECOMPOSITION
 # Task Description are the given task, which is described in abstract way.
 # Task Understanding are the generalized task, learn based from this pattern.
 # Decompose and parallelize subtasks wherever possible.
 # Independent subtasks:
 # Subtask 1: Put the laptop, book, and pen to the coffee table. (Skills required: GoToObject, PickupObject, PutObject)
-# We can directly execute the Subtask 1.
 
 # CODE
 def put_things_to_coffee_table():
@@ -225,13 +190,11 @@ def put_things_to_coffee_table():
     # 12: Put the pen to the coffee table.
     PutObject('Pen', 'CoffeeTable')
 
-# Execute subtask 1.
-put_things_to_coffee_table()
-
 
 
 # EXAMPLE 4 - Task Description: Make a toast.
 # Task Understanding: Slice a bread, toast the sliced bread, then serve it on a plate.
+
 # GENERAL TASK DECOMPOSITION
 # Task Description are the given task, which is described in abstract way.
 # Task Understanding are the generalized task, learn based from this pattern.
@@ -240,7 +203,6 @@ put_things_to_coffee_table()
 # Subtask 1: Slice bread. (Skills required: GoToObject, PickupObject, PutObject, SliceObject)
 # Subtask 2: Toast the sliced bread. (Skills required: GoToObject, PickupObject, PutObject, SwitchOn, SwitchOff)
 # Subtask 3: Serve the toast on a plate. (Skills required: GoToObject, PickupObject, PutObject)
-# We can execute all the Subtask in serial, start from Subtask 1, when done execute Subtask 2, then execute Subtask 3 after Subtask 3 done.
 
 # CODE
 def slice_bread():
@@ -261,13 +223,13 @@ def slice_bread():
 def toast_bread():
     # 0: Subtask 2: Toast the sliced bread.
     # 1: Go to the sliced bread.
-    GoToObject('BreadSliced')
+    GoToSlicedObject('BreadSliced')
     # 2: Pick up the sliced bread.
-    PickupObjectSliced('BreadSliced')
+    PickupSlicedObject('BreadSliced')
     # 3: Go to the toaster.
     GoToObject('Toaster')
     # 4: Put sliced bread in to the toaster.
-    PutObjectSliced('BreadSliced', 'Toaster')
+    PutSlicedObject('BreadSliced', 'Toaster')
     # 5: Switch on the toaster.
     SwitchOn('Toaster')
     # 6: Wait for a while to let the sliced bread cooked.
@@ -280,17 +242,92 @@ def serve_toast_on_plate():
     # 1: Go to the toaster.
     GoToObject('Toaster')
     # 2: Pick up the toast.
-    PickupObjectSliced('BreadSliced')
+    PickupSlicedObject('BreadSliced')
     # 3: Go to the plate.
     GoToObject('Plate')
     # 4: Put the toast on a plate
-    PutObjectSliced('BreadSliced', 'Plate')
+    PutSlicedObject('BreadSliced', 'Plate')
 
-# Execute Subtask 1
-slice_bread()
 
-# Execute Subtask 2
-toast_bread()
 
-# Execute Subtask 3
-serve_toast_on_plate()
+# EXAMPLE 5 - Task Description: A cup of coffee please.
+# Task Understanding: Make a cup of coffee.
+
+# GENERAL TASK DECOMPOSITION
+# Task Description are the given task, which is described in abstract way.
+# Task Understanding are the generalized task, learn based from this pattern.
+# Decompose and parallelize subtasks wherever possible.
+# Independent subtasks:
+# Subtask 1: Make a cup of coffee. (Skills required: GoToObject, PickupObject, PutObject, SwitchOn, SwitchOff)
+
+# CODE
+def make_a_coffee():
+    # 0: Subtask 1: Make a cup of coffee.
+    # 1: Go to the mug.
+    GoToObject('Mug')
+    # 2: Pick up the mug.
+    PickupObject('Mug')
+    # 3: Go to the coffee machine.
+    GoToObject('CoffeeMachine')
+    # 4: Put Mug in to the coffee machine
+    PutObject('Mug', 'CoffeeMachine')
+    # 5: Turn on the coffee machine.
+    SwitchOn('CoffeeMachine')
+    # 6: Wait for a while to let the mug filled with coffee.
+    time.sleep(5)
+    # 7: Turn off the coffee machine.
+    SwitchOff('CoffeeMachine')
+    # 8: Pick up the mug of coffee.
+    PickupObject('Mug')
+    # 9: Go to the countertop.
+    GoToObject('CounterTop')
+    # 10: Put mug of coffee in to the countertop.
+    PutObject('Mug', 'CounterTop')
+
+
+
+# EXAMPLE 6 - Task Description: Give me a plate of fried egg.
+# Task Understanding: Cook an egg, serve fried egg on plate.
+
+# GENERAL TASK DECOMPOSITION
+# Task Description are the given task, which is described in abstract way.
+# Task Understanding are the generalized task, learn based from this pattern.
+# Decompose and parallelize subtasks wherever possible.
+# Independent subtasks:
+# Subtask 1: Cook an egg. (Skills required: GoToObject, PickupObject, PutObject, BreakObject, SwitchOn, SwitchOff)
+# Subtask 2: Serve fried egg on plate. (Skills required: GoToObject, PickupObject, PutObject)
+
+def cook_an_egg():
+    # 0: Subtask 1: Cook an egg.
+    # 1: Go to the egg.
+    GoToObject(robot, 'Egg')
+    # 2: Pick up the egg.
+    PickupObject(robot, 'Egg')
+    # 3: Go to the pan.
+    GoToObject(robot, 'Pan')
+    # 4: Put egg in to the pan.
+    PutObject(robot, 'Egg', 'Pan')
+    # 5: Break the egg.
+    BreakObject(robot, 'Egg')
+    # 6: Pick up the pan.
+    PickupObject(robot, 'Pan')
+    # 7: Go to the stove burner.
+    GoToObject(robot, 'StoveBurner')
+    # 8: Put pan in to the stove burner.
+    PutObject(robot, 'Pan', 'StoveBurner')
+    # 9: Turn on the stove knob.
+    SwitchOn(robot, 'StoveKnob')
+    # 10: Wait for a while to let the egg cooked.
+    time.sleep(5)
+    # 11: Turn off the stove knob.
+    SwitchOff(robot, 'StoveKnob')
+
+def serve_fried_egg_on_plate(robot):
+    # 0: Subtask 2: Serve fried egg on plate.
+    GoToObject(robot, 'Egg')
+    # 1: Go to the egg.
+    PickupObject(robot, 'Egg')
+    # 2: Go to the plate.
+    GoToObject(robot, 'Plate')
+    # 3: Put the egg on plate.
+    PutObject(robot, 'Egg', 'Plate')

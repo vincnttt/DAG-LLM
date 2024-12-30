@@ -5,15 +5,27 @@ import subprocess
 import time
 import threading
 import cv2
+import time
 import numpy as np
 from ai2thor.controller import Controller
 from scipy.spatial import distance
 from typing import Tuple
-from collections import deque
+from collections import defaultdict, deque
 import random
 import os
 import ast
 from glob import glob
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 
 def closest_node(node, nodes, no_robot, clost_node_location):

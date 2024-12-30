@@ -16,6 +16,7 @@ from glob import glob
 from collections import deque, defaultdict
 
 
+
 def closest_node(node, nodes, no_robot, clost_node_location):
     crps = []
     distances = distance.cdist([node], nodes)[0]
@@ -66,7 +67,7 @@ robots = [
                 'PickupObject', 'PutObject', 'DropHandObject', 'ThrowObject', 'PushObject', 'PullObject'], 'mass': 100}
 ]
 
-floor_no = 6
+floor_no = 212
 
 # Start run logs
 curr_path = os.path.dirname(__file__)
@@ -77,7 +78,7 @@ with open(f"{curr_path}/log.txt", 'a') as f:
 total_exec = 0
 success_exec = 0
 
-c = Controller(height=720, width=720)
+c = Controller(height=480, width=480)
 c.reset("FloorPlan" + str(floor_no))
 no_robot = len(robots)
 
@@ -863,81 +864,153 @@ def ThrowObject(robot, sw_obj):
     time.sleep(1)
 
 
-def execute_tasks_in_parallel(tasks, dependencies, robot_task_map):
-    # Step 1: Build graph and in-degrees
-    graph = defaultdict(list)
-    in_degree = defaultdict(int)
+### V1
+# def execute_tasks_in_parallel(tasks, dependencies, robot_task_map):
+#     # Step 1: Build graph and in-degrees
+#     graph = defaultdict(list)
+#     in_degree = defaultdict(int)
+#
+#     for pre, nxt in dependencies:
+#         graph[pre].append(nxt)
+#         in_degree[nxt] += 1
+#         if pre not in in_degree:
+#             in_degree[pre] = 0  # Initialize if not already present
+#
+#     # Step 2: Calculate task levels
+#     queue = deque([task for task in in_degree if in_degree[task] == 0])
+#     task_level = {}
+#     level = 0
+#
+#     while queue:
+#         size = len(queue)
+#         for _ in range(size):
+#             current = queue.popleft()
+#             task_level[current] = level
+#             for neighbor in graph[current]:
+#                 in_degree[neighbor] -= 1
+#                 if in_degree[neighbor] == 0:
+#                     queue.append(neighbor)
+#         level += 1  # Increment level after processing one level of tasks
+#
+#     # Group tasks by level for parallel execution
+#     level_tasks = defaultdict(list)
+#     for task, lvl in task_level.items():
+#         level_tasks[lvl].append(task)
+#
+#     # Step 3: Execute tasks using threads
+#     # def run_task(task):
+#     #     robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
+#     #     print(f"Starting task {task} on {robot} index ")
+#     #     # time.sleep(task_durations[task])  # Simulate task duration
+#     #     print(f"Finished task {task} on {robot}")
+#     #
+#     # for lvl in sorted(level_tasks.keys()):
+#     #     threads = []
+#     #     print(f"Executing level {lvl} tasks in parallel: {level_tasks[lvl]}")
+#     #     for task in level_tasks[lvl]:
+#     #         print(run_task)
+#     #         print(task)
+#     #         # thread = threading.Thread(target=run_task, args=(task,))
+#     #         thread = threading.Thread(target=run_task, args=(robots[],))
+#     #         threads.append(thread)
+#     #         thread.start()
+#     #     for thread in threads:
+#     #         thread.join()  # Wait for all tasks in the level to complete
+#     #     print(f"Completed all level {lvl} tasks.\n")
+#
+#     def run_task(robot, task):
+#         print(f"Starting task {task} on {robot}")
+#         # time.sleep(task_durations[task])  # Simulate task duration
+#         print(f"Finished task {task} on {robot}")
+#
+#     # Updated threading.Thread call inside the loop
+#     for lvl in sorted(level_tasks.keys()):
+#         threads = []
+#         print(f"Executing level {lvl} tasks in parallel: {level_tasks[lvl]}")
+#         for task in level_tasks[lvl]:
+#             # Find the robot assigned to the current task
+#             robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
+#             thread = threading.Thread(target=globals()[task], args=(robots[robot],))
+#             threads.append(thread)
+#             thread.start()
+#         for thread in threads:
+#             thread.join()  # Wait for all tasks in the level to complete
+#         print(f"Completed all level {lvl} tasks.\n")
 
-    for pre, nxt in dependencies:
-        graph[pre].append(nxt)
-        in_degree[nxt] += 1
-        if pre not in in_degree:
-            in_degree[pre] = 0  # Initialize if not already present
 
-    # Step 2: Calculate task levels
-    queue = deque([task for task in in_degree if in_degree[task] == 0])
-    task_level = {}
-    level = 0
+### V2
+# def execute_tasks_with_robot_availability(tasks, dependencies, robot_task_map):
+#     # Step 1: Build graph and in-degrees
+#     graph = defaultdict(list)
+#     in_degree = defaultdict(int)
+#
+#     for pre, nxt in dependencies:
+#         graph[pre].append(nxt)
+#         in_degree[nxt] += 1
+#         if pre not in in_degree:
+#             in_degree[pre] = 0  # Initialize if not already present
+#
+#     # Step 2: Calculate task levels
+#     queue = deque([task for task in in_degree if in_degree[task] == 0])
+#     task_level = {}
+#     level = 0
+#
+#     while queue:
+#         size = len(queue)
+#         for _ in range(size):
+#             current = queue.popleft()
+#             task_level[current] = level
+#             for neighbor in graph[current]:
+#                 in_degree[neighbor] -= 1
+#                 if in_degree[neighbor] == 0:
+#                     queue.append(neighbor)
+#         level += 1  # Increment level after processing one level of tasks
+#
+#     # Group tasks by level for parallel execution
+#     level_tasks = defaultdict(list)
+#     for task, lvl in task_level.items():
+#         level_tasks[lvl].append(task)
+#
+#     # Step 3: Execute tasks with robot availability tracking
+#     robot_availability = {robot: 0 for robot in robot_task_map}  # Tracks when each robot is free
+#     lock = threading.Lock()  # To ensure thread-safe updates to robot_availability
+#
+#     def run_task(robot, task):
+#         with lock:
+#             robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
+#             print(f"Starting task {task} on {robot}")
+#         time.sleep(task_durations[task])  # Simulate task duration
+#         with lock:
+#             print(f"Finished task {task} on {robot}")
+#             robot_availability[robot] = time.time()  # Mark robot as free
+#
+#     for lvl in sorted(level_tasks.keys()):
+#         threads = []
+#         print(f"Executing level {lvl} tasks in parallel: {level_tasks[lvl]}")
+#         for task in level_tasks[lvl]:
+#             # Find the first available robot that can handle this task
+#             while True:
+#                 with lock:
+#                     current_time = time.time()
+#                     available_robots = [robot for robot, free_time in robot_availability.items()
+#                                         if free_time <= current_time and task in robot_task_map[robot]]
+#                 if available_robots:
+#                     chosen_robot = available_robots[0]  # Pick the first available robot
+#                     robot_availability[chosen_robot] = current_time + task_durations[task]  # Update availability
+#                     # thread = threading.Thread(target=run_task, args=(chosen_robot, task))
+#                     thread = threading.Thread(target=run_task, args=(chosen_robot[],))
+#                     threads.append(thread)
+#                     thread.start()
+#                     break
+#                 else:
+#                     time.sleep(0.1)  # Wait for robots to become available
+#         for thread in threads:
+#             thread.join()  # Wait for all tasks in the level to complete
+#         print(f"Completed all level {lvl} tasks.\n")
 
-    while queue:
-        size = len(queue)
-        for _ in range(size):
-            current = queue.popleft()
-            task_level[current] = level
-            for neighbor in graph[current]:
-                in_degree[neighbor] -= 1
-                if in_degree[neighbor] == 0:
-                    queue.append(neighbor)
-        level += 1  # Increment level after processing one level of tasks
-
-    # Group tasks by level for parallel execution
-    level_tasks = defaultdict(list)
-    for task, lvl in task_level.items():
-        level_tasks[lvl].append(task)
-
-    # Step 3: Execute tasks using threads
-    # def run_task(task):
-    #     robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
-    #     print(f"Starting task {task} on {robot} index ")
-    #     # time.sleep(task_durations[task])  # Simulate task duration
-    #     print(f"Finished task {task} on {robot}")
-    #
-    # for lvl in sorted(level_tasks.keys()):
-    #     threads = []
-    #     print(f"Executing level {lvl} tasks in parallel: {level_tasks[lvl]}")
-    #     for task in level_tasks[lvl]:
-    #         print(run_task)
-    #         print(task)
-    #         # thread = threading.Thread(target=run_task, args=(task,))
-    #         thread = threading.Thread(target=run_task, args=(robots[],))
-    #         threads.append(thread)
-    #         thread.start()
-    #     for thread in threads:
-    #         thread.join()  # Wait for all tasks in the level to complete
-    #     print(f"Completed all level {lvl} tasks.\n")
-
-    def run_task(robot, task):
-        print(f"Starting task {task} on {robot}")
-        # time.sleep(task_durations[task])  # Simulate task duration
-        print(f"Finished task {task} on {robot}")
-
-    # Updated threading.Thread call inside the loop
-    for lvl in sorted(level_tasks.keys()):
-        threads = []
-        print(f"Executing level {lvl} tasks in parallel: {level_tasks[lvl]}")
-        for task in level_tasks[lvl]:
-            # Find the robot assigned to the current task
-            robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
-            thread = threading.Thread(target=globals()[task], args=(robots[robot],))
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()  # Wait for all tasks in the level to complete
-        print(f"Completed all level {lvl} tasks.\n")
 
 
 ### TEST CASES 1
-
 def turn_off_lights(robot):
     # 0: Subtask 1: Turn off the lights.
     # 1: Go to the light switch.
@@ -951,6 +1024,44 @@ def turn_off_floor_lamp(robot):
     GoToObject(robot, 'FloorLamp')
     # 2: Turn off the floor lamp.
     SwitchOff(robot, 'FloorLamp')
+#
+# subtasks = ["turn_off_lights", "turn_off_floor_lamp"]
+#
+# dependencies = []
+#
+# qualified_robot = {
+#     "turn_off_lights": [0,1],    # Subtask slice_bread can be done by Robot 1 and Robot 2
+#     "turn_off_floor_lamp": [0,1],    # Subtask toast_bread can be done by Robot 1 and Robot 2
+# }
+
+### TEST CASES 1
+# def cook_egg(robot):
+#     GoToObject(robot, 'Egg')
+#     PickupObject(robot, 'Egg')
+#     GoToObject(robot, 'Pan')
+#     PutObject(robot, 'Egg', 'Pan')
+#     BreakObject(robot, 'Egg')
+#     PickupObject(robot, 'Pan')
+#     GoToObject(robot, 'StoveBurner')
+#     PutObject(robot, 'Pan', 'StoveBurner')
+#     SwitchOn(robot, 'StoveKnob')
+#     time.sleep(5)
+#     SwitchOff(robot, 'StoveKnob')
+#
+# def serve_egg(robot):
+#     GoToObject(robot, 'Egg')
+#     PickupObject(robot, 'Egg')
+#     GoToObject(robot, 'Plate')
+#     PutObject(robot, 'Egg', 'Plate')
+#
+# subtasks = ["cook_egg", "serve_egg"]
+#
+# dependencies = [("cook_egg", "serve_egg")]
+#
+# qualified_robot = {
+#     "cook_egg": [0,1],
+#     "serve_egg": [0,1],
+# }
 
 def put_pen_to_drawer(robot):
     GoToObject(robot, 'Pen')
@@ -962,7 +1073,7 @@ def put_pen_to_drawer(robot):
 subtasks = ["turn_off_lights", "turn_off_floor_lamp", "put_pen_to_drawer"]
 
 dependencies = [
-    ("turn_off_lights", "turn_off_floor_lamp"),
+    ("turn_off_lights", "put_pen_to_drawer"),
     ("turn_off_floor_lamp", "put_pen_to_drawer"),
 ]
 
@@ -972,68 +1083,281 @@ qualified_robot = {
     "put_pen_to_drawer": [0,1]      # Subtask serve_toast_on_plate can be done by Robot 1 and Robot 2
 }
 
-# Step 1: Allocate tasks to robots
-def allocate_tasks_with_dependencies(tasks, dependencies, qualified_robot, robots):
-    # Build graph and perform topological sort as in previous implementation
+# def put_vegetables_to_fridge(robot):
+#     GoToObject(robot, 'Mug')
+#     PickupObject(robot, 'Mug')
+#     GoToObject(robot, 'CoffeeMachine')
+#     PutObject(robot, 'Mug', 'CoffeeMachine')
+#     SwitchOn(robot, 'CoffeeMachine')
+#     time.sleep(5)
+#     SwitchOff(robot, 'CoffeeMachine')
+#     PickupObject(robot, 'Mug')
+#     GoToObject(robot, 'CounterTop')
+#     PutObject(robot, 'Mug', 'CounterTop')
+#
+#
+# put_vegetables_to_fridge(robots[0])
+
+### CUSTOM task_duration - V1, V2 ONLY, NOT IMPLEMENTED YET ON V3
+# task_durations = {
+#     "turn_off_lights": 2,  # Simulate task 1 takes 2 seconds
+#     "turn_off_floor_lamp": 3,  # Simulate task 2 takes 3 seconds
+#     "put_pen_to_drawer": 2,  # Simulate task 3 takes 2 seconds
+# }
+
+
+### V3
+def build_graph(dependencies):
+    """Build task dependency graph and calculate in-degrees."""
     graph = defaultdict(list)
     in_degree = defaultdict(int)
 
-    for pre, nxt in dependencies:
-        graph[pre].append(nxt)
-        in_degree[nxt] += 1
-        if pre not in in_degree:
-            in_degree[pre] = 0
+    for src, dst in dependencies:
+        graph[src].append(dst)
+        in_degree[dst] += 1
 
-    queue = deque([task for task in in_degree if in_degree[task] == 0])
-    topo_order = []
+    for task in subtasks:
+        if task not in in_degree:
+            in_degree[task] = 0  # Tasks with no incoming edges
 
-    while queue:
-        current = queue.popleft()
-        topo_order.append(current)
-        for neighbor in graph[current]:
-            in_degree[neighbor] -= 1
-            if in_degree[neighbor] == 0:
-                queue.append(neighbor)
-
-    task_allocation = {}
-
-    def can_assign(robot, task):
-        stack = [task]
-        visited = set()
-        while stack:
-            current = stack.pop()
-            if current in visited:
-                continue
-            visited.add(current)
-            if robot not in qualified_robot[current]:
-                return False
-            stack.extend(graph[current])
-        return True
-
-    def assign_task(task, robots):
-        for robot_index in robots:
-            if can_assign(robot_index, task):
-                task_allocation[task] = robot_index
-                return True
-        return False
-
-    for task in topo_order:
-        if not assign_task(task, qualified_robot[task]):
-            raise ValueError(f"Task {task} could not be assigned to any robot.")
-
-    robot_task_map = defaultdict(list)
-    for task, robot_index in task_allocation.items():
-        # robot_task_map[robots[robot_index]].append(task)
-        robot_task_map[robot_index].append(task)
-
-    return robot_task_map
+    return graph, in_degree
 
 
-robot_task_map = allocate_tasks_with_dependencies(subtasks, dependencies, qualified_robot, robots)
+def allocate_tasks(subtasks, graph, in_degree, qualified_robot):
+    """Allocate tasks to robots ensuring parallel execution."""
+    assignment = {}  # Task -> Assigned robot
+    available_robots = set(range(len(robots)))  # Set of available robot indices
+    ready_queue = deque([task for task, degree in in_degree.items() if degree == 0])
 
-# Step 2: Execute tasks in parallel
-execute_tasks_in_parallel(subtasks, dependencies, robot_task_map)
+    while ready_queue:
+        task_batch = list(ready_queue)  # Tasks that can be executed concurrently
+        ready_queue.clear()
 
+        # Assign robots to tasks in the current batch
+        robot_used = set()
+        for task in task_batch:
+            for robot in qualified_robot[task]:
+                if robot in available_robots and robot not in robot_used:
+                    assignment[task] = robot
+                    robot_used.add(robot)
+                    break
+
+        # Verify all tasks in the batch are assigned
+        if len(task_batch) != len(robot_used):
+            raise ValueError("Not enough robots to execute the current batch of tasks.")
+
+        # Update dependencies and find new ready tasks
+        for task in task_batch:
+            for neighbor in graph[task]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    ready_queue.append(neighbor)
+
+    return assignment
+
+
+def run_tasks(assignment, graph):
+    """Run tasks either in parallel or sequentially based on dependency levels."""
+    in_degree = {task: 0 for task in subtasks}
+    for src, dsts in graph.items():
+        for dst in dsts:
+            in_degree[dst] += 1
+
+    ready_queue = deque([task for task, degree in in_degree.items() if degree == 0])
+
+    def execute_task(task, robot_idx):
+        print(f"Task {task} is being executed by {robots[robot_idx]}")
+        globals()[task](robots[robot_idx])
+        # time.sleep(1)  # Simulate task duration
+        # print(f"Task {task} completed by {robots[robot_idx]}")
+
+    while ready_queue:
+        task_batch = list(ready_queue)  # Tasks at the current level (no dependencies)
+        ready_queue.clear()
+        print(task_batch)
+
+        threads = []  # Store threads for parallel execution
+        for task in task_batch:
+            robot_idx = assignment[task]
+            task_thread = threading.Thread(target=execute_task, args=(task, robot_idx))
+            # print("TASK: ", task, " ROBOT: ", robots[robot_idx])
+            # task_thread = threading.Thread(target=globals()[task], args=(globals()[task], robots[robot_idx]))
+            # print(task_thread)
+            threads.append(task_thread)
+
+        # Start all threads (parallel execution for current level)
+        for thread in threads:
+            thread.start()
+
+        # Wait for all threads to finish
+        for thread in threads:
+            thread.join()
+
+        # Update dependencies and find new ready tasks
+        for task in task_batch:
+            for neighbor in graph[task]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    ready_queue.append(neighbor)
+
+
+# Build the task graph and calculate in-degrees
+graph, in_degree = build_graph(dependencies)
+
+# Allocate tasks to robots
+try:
+    assignment = allocate_tasks(subtasks, graph, in_degree, qualified_robot)
+    print("Task Allocation:")
+    for task, robot_idx in assignment.items():
+        # print(f"Task {task} -> {robots[robot_idx]}")
+        print(f"Task {task} -> {robot_idx}")
+
+    # Execute tasks
+    print("\nExecuting Tasks:")
+    run_tasks(assignment, graph)
+
+except ValueError as e:
+    print(e)
+
+
+
+### V2
+# # Allocate tasks to robots (preprocessing step)
+# def allocate_tasks_with_dependencies(tasks, dependencies, qualified_robot, robots):
+#     # Build graph and perform topological sort as in previous implementation
+#     graph = defaultdict(list)
+#     in_degree = defaultdict(int)
+#
+#     for pre, nxt in dependencies:
+#         graph[pre].append(nxt)
+#         in_degree[nxt] += 1
+#         if pre not in in_degree:
+#             in_degree[pre] = 0
+#
+#     queue = deque([task for task in in_degree if in_degree[task] == 0])
+#     topo_order = []
+#
+#     while queue:
+#         current = queue.popleft()
+#         topo_order.append(current)
+#         for neighbor in graph[current]:
+#             in_degree[neighbor] -= 1
+#             if in_degree[neighbor] == 0:
+#                 queue.append(neighbor)
+#
+#     task_allocation = {}
+#
+#     def can_assign(robot, task):
+#         stack = [task]
+#         visited = set()
+#         while stack:
+#             current = stack.pop()
+#             if current in visited:
+#                 continue
+#             visited.add(current)
+#             if robot not in qualified_robot[current]:
+#                 return False
+#             stack.extend(graph[current])
+#         return True
+#
+#     def assign_task(task, robots):
+#         for robot_index in robots:
+#             if can_assign(robot_index, task):
+#                 task_allocation[task] = robot_index
+#                 return True
+#         return False
+#
+#     for task in topo_order:
+#         if not assign_task(task, qualified_robot[task]):
+#             raise ValueError(f"Task {task} could not be assigned to any robot.")
+#
+#     robot_task_map = defaultdict(list)
+#     for task, robot_index in task_allocation.items():
+#         robot_task_map[robots[robot_index]].append(task)
+#
+#     return robot_task_map
+#
+#
+# robot_task_map = allocate_tasks_with_dependencies(subtasks, dependencies, qualified_robot, robots)
+#
+# # Execute tasks with dynamic robot availability
+# execute_tasks_with_robot_availability(subtasks, dependencies, robot_task_map)
+
+
+### V1
+# # Step 1: Allocate tasks to robots
+# def allocate_tasks_with_dependencies(tasks, dependencies, qualified_robot, robots):
+#     # Build graph and perform topological sort as in previous implementation
+#     graph = defaultdict(list)
+#     in_degree = defaultdict(int)
+#
+#     for pre, nxt in dependencies:
+#         graph[pre].append(nxt)
+#         in_degree[nxt] += 1
+#         if pre not in in_degree:
+#             in_degree[pre] = 0
+#
+#     queue = deque([task for task in in_degree if in_degree[task] == 0])
+#     topo_order = []
+#
+#     while queue:
+#         current = queue.popleft()
+#         topo_order.append(current)
+#         for neighbor in graph[current]:
+#             in_degree[neighbor] -= 1
+#             if in_degree[neighbor] == 0:
+#                 queue.append(neighbor)
+#
+#     task_allocation = {}
+#
+#     def can_assign(robot, task):
+#         stack = [task]
+#         visited = set()
+#         while stack:
+#             current = stack.pop()
+#             if current in visited:
+#                 continue
+#             visited.add(current)
+#             if robot not in qualified_robot[current]:
+#                 return False
+#             stack.extend(graph[current])
+#         return True
+#
+#     def assign_task(task, robots):
+#         for robot_index in robots:
+#             if can_assign(robot_index, task):
+#                 task_allocation[task] = robot_index
+#                 return True
+#         return False
+#
+#     for task in topo_order:
+#         if not assign_task(task, qualified_robot[task]):
+#             raise ValueError(f"Task {task} could not be assigned to any robot.")
+#
+#     robot_task_map = defaultdict(list)
+#     for task, robot_index in task_allocation.items():
+#         # robot_task_map[robots[robot_index]].append(task)
+#         robot_task_map[robot_index].append(task)
+#
+#     return robot_task_map
+#
+#
+# robot_task_map = allocate_tasks_with_dependencies(subtasks, dependencies, qualified_robot, robots)
+#
+# # Step 2: Execute tasks in parallel
+# execute_tasks_in_parallel(subtasks, dependencies, robot_task_map)
+
+
+### MANUAL EXECUTION
+# task_1 = threading.Thread(target=turn_off_lights, args=(robots[0],))
+# task_2 = threading.Thread(target=turn_off_floor_lamp, args=(robots[1],))
+#
+# task_1.start()
+# task_2.start()
+# task_1.join()
+# task_2.join()
+#
+# put_pen_to_drawer(robots[0])
 
 action_queue.append({'action': 'Done'})
 action_queue.append({'action': 'Done'})

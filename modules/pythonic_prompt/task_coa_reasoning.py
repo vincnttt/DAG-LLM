@@ -17,3 +17,15 @@
 # EXAMPLE 5
 # Task Description: Make a toast.
 # Task Understanding: Slice a bread, toast the sliced bread, then serve it on a plate.
+
+# EXAMPLE 5
+# Task Description: Give me a plate of french fries.
+# Task Understanding: Slice a potato, cook the potato, then serve it on a plate.
+
+# EXAMPLE 6
+# Task Description: Trash the newspaper.
+# Task Understanding: Throw the newspaper to the garbage can.
+
+# EXAMPLE 7
+# Task Description: Make a plate of fried egg.
+# Task Understanding: Cook an egg, then serve it on plate.

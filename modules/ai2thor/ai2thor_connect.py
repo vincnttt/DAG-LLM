@@ -2,7 +2,8 @@
 total_exec = 0
 success_exec = 0
 
-c = Controller(height=720, width=720)
+# c = Controller(height=720, width=720)
+c = Controller(height=480, width=480)
 c.reset("FloorPlan" + str(floor_no))
 no_robot = len(robots)
 
@@ -473,7 +474,7 @@ def PickupObject(robots, pick_obj):
     no_agents = len(robots)
     # robots distance to the goal
     for idx in range(no_agents):
-        print("PIcking: ", pick_obj)
+        print("Picking: ", pick_obj)
         write_log("[Picking]", pick_obj)
 
         robot = robots[idx]
@@ -787,3 +788,57 @@ def ThrowObject(robot, sw_obj):
 
     action_queue.append({'action': 'ThrowObject', 'objectId': sw_obj_id, 'agent_id': agent_id})
     time.sleep(1)
+
+
+# def execute_tasks_in_parallel(tasks, dependencies, robot_task_map):
+#     # Step 1: Build graph and in-degrees
+#     graph = defaultdict(list)
+#     in_degree = defaultdict(int)
+#
+#     for pre, nxt in dependencies:
+#         graph[pre].append(nxt)
+#         in_degree[nxt] += 1
+#         if pre not in in_degree:
+#             in_degree[pre] = 0  # Initialize if not already present
+#
+#     # Step 2: Calculate task levels
+#     queue = deque([task for task in in_degree if in_degree[task] == 0])
+#     task_level = {}
+#     level = 0
+#
+#     while queue:
+#         size = len(queue)
+#         for _ in range(size):
+#             current = queue.popleft()
+#             task_level[current] = level
+#             for neighbor in graph[current]:
+#                 in_degree[neighbor] -= 1
+#                 if in_degree[neighbor] == 0:
+#                     queue.append(neighbor)
+#         level += 1  # Increment level after processing one level of tasks
+#
+#     # Group tasks by level for parallel execution
+#     level_tasks = defaultdict(list)
+#     for task, lvl in task_level.items():
+#         level_tasks[lvl].append(task)
+#
+#     # Step 3: Execute tasks using threads
+#     def run_task(task):
+#         robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
+#         print(f"Starting task {task} on {robot}")
+#         # time.sleep(task_durations[task])  # Simulate task duration
+#         print(f"Finished task {task} on {robot}")
+#
+#     for lvl in sorted(level_tasks.keys()):
+#         threads = []
+#         print(f"Executing level {lvl} tasks in parallel: {level_tasks[lvl]}")
+#         for task in level_tasks[lvl]:
+#             # Find the robot assigned to the current task
+#             robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
+#             thread = threading.Thread(target=globals()[task], args=(robots[robot],))
+#             threads.append(thread)
+#             thread.start()
+#         for thread in threads:
+#             thread.join()  # Wait for all tasks in the level to complete
+#         print(f"Completed all level {lvl} tasks.\n")
+
