@@ -366,13 +366,13 @@ qualified_robot = {
 # TASK ALLOCATION
 robots = [
     {'name': 'robot1', 'skills': ['GoToObject', 'SliceObject', 'PickupObject', 'PutObject', 'SwitchOn', 'SwitchOff'], 'mass': 100},
-    {'name': 'robot2', 'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'SliceObject', 'PickupObject', 'PutObject', 'SwitchOn', 'SwitchOff', 'ThrowObject'],'mass': 100},
+    {'name': 'robot2', 'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'SliceObject', 'PickupObject', 'PutObject', 'SwitchOn', 'SwitchOff'],'mass': 100},
     {'name': 'robot3', 'skills': ['GoToObject', 'OpenObject', 'CloseObject', 'BreakObject', 'SliceObject', 'PickupObject', 'PutObject'], 'mass': 100}
 ]
 # SOLUTION
 # All the robots DO NOT share the same set and number (no_skills) of skills. In this case where all robots have different sets of skills - Focus on Task Allocation based on Robot Skills alone.
 # Analyze the skills required for each subtask and the skills each robot possesses. In this scenario, we have three main subtasks: 'Throw the newspaper to the garbage can', 'Turn on laptop' and 'Turn on television'.
-# For the 'Throw the newspaper to the garbage can' subtask, it requires 'GoToObject', 'PickupObject', and 'PutObject'. In this case Robot 3 has all these skills.
+# For the 'Throw the newspaper to the garbage can' subtask, it requires 'GoToObject', 'PickupObject', and 'ThrowObject'. In this case Robot 3 has all these skills.
 # For the 'Turn on laptop' subtask, it requires 'GoToObject', 'SwitchOn', and 'SwitchOff'. In this case Robot 1 and Robot 2 has all these skills.
 # For the 'Turn on television' subtask, it requires 'GoToObject', 'SwitchOn', and 'SwitchOff'. In this case Robot 1 and Robot 2 has all these skills.
 # As from above solution, subtask 'Store perishable items to fridge' can be done by Robot 2 and Robot 3, subtask 'Make a cup of coffee' can only be done by Robot 3
@@ -386,8 +386,8 @@ def throw_the_newspaper_to_the_garbage_can(robots):
     PickupObject(robots, 'NewsPaper')
     # 3: Go to the garbage can.
     GoToObject(robots, 'GarbageCan')
-    # 4: Throw newspaper to the garbage can.
-    PutObject(robots, 'NewsPaper', 'GarbageCan')
+    # 4: Throw the newspaper
+    ThrowObject(robots, 'NewsPaper')
 
 def make_a_coffee(robots):
     # 0: Subtask 1: Make a cup of coffee.
