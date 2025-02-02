@@ -435,38 +435,6 @@ def GoToSlicedObject(robots, dest_obj):
         recp_id = dest_obj_id
 
 
-def CleanArea(robots):
-    global recp_id
-
-    if not isinstance(robots, list):
-        robots = [robots]
-    no_agents = len(robots)
-
-    dist_goals = []
-    prev_dist_goals = [10.0] * len(robots)
-    count_since_update = [0] * len(robots)
-    closest_node_location = [0] * len(robots)
-
-    goal_tresh = 0.35
-
-    while all(d > goal_tresh for d in dist_goals):
-        for ia, robot in enumerate(robots):
-            robot_name = robot['name']
-            agent_id = int(robot_name[-1]) - 1
-
-            metadata = c.last_event.events[agent_id].metadata
-            location = {
-                "x": metadata["agent"]["position"]["x"],
-                "y": metadata["agent"]["position"]["y"],
-                "z": metadata["agent"]["position"]["z"],
-                "rotation": metadata["agent"]["rotation"]["y"],
-                "horizon": metadata["agent"]["cameraHorizon"]}
-
-            prev_dist_goals[ia] = dist_goals[ia]
-            dist_goals[ia] = distance_pts()
-
-
-
 def PickupObject(robots, pick_obj):
     if not isinstance(robots, list):
         # convert robot to a list

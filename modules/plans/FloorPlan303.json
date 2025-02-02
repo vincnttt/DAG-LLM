@@ -1,0 +1,4 @@
+{"task": "Turn off desk lamp", "robot list": [1], "object_states": [{"name": "DeskLamp", "contains": [], "state": "OFF"}], "trans": 0, "max_trans": 0}
+{"task": "Put CD and Cellphone into drawer, and turn on laptop", "robot list": [1,2], "object_states": [{"name": "Drawer", "contains": ["CD", "CellPhone"], "state": "None"}, {"name": "Laptop", "contains": [], "state": "ON"}], "trans": 0, "max_trans": 0}
+{"task": "Put Tennis racket and Vase into box", "robot list": [3,4], "object_states": [{"name": "Box", "contains": ["TennisRacket", "Vase"], "state": "None"}], "trans": 0, "max_trans": 0}
+{"task": "Close the Blinds", "robot list": [5], "object_states": [{"name": "Blinds", "contains": [], "state": "CLOSED"}], "trans": 0, "max_trans": 0}

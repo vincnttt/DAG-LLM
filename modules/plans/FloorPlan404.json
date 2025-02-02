@@ -1,0 +1,4 @@
+{"task": "Turn on Shower head, then close Shower curtain", "robot list": [1], "object_states": [{"name": "ShowerHead", "contains": [], "state": "ON"}, {"name": "ShowerCurtain", "contains": [], "state": "CLOSE"}], "trans": 0, "max_trans": 0}
+{"task": "Put Toilet paper into trash, then make room dark", "robot list": [2], "object_states": [{"name": "GarbageCan", "contains": ["ToiletPaper"], "state": "None"}, {"name": "LightSwitch", "contains": [], "state": "OFF"}], "trans": 0, "max_trans": 0}
+{"task": "Put Soap bottle into bathtub", "robot list": [5], "object_states": [], "trans": 0, "max_trans": 0}
+{"task": "Throw the cloth into trash and turn off the light", "robot list": [5,10], "object_states": [{"name": "GarbageCan", "contains": ["Cloth"], "state": "None"}, {"name": "LightSwitch", "contains": [], "state": "OFF"}], "trans": 0, "max_trans": 0}

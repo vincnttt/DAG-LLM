@@ -6,8 +6,6 @@
 # Subtask 2: Fry the potato. (Skills required: GoToObject, PickupObject, PutObject, SwitchOn, SwitchOff)
 # Subtask 3: Serve on plate. (Skills required: GoToObject, PickupObject, PutObject)
 # we can execute Subtask 1 first, after Subtask 1 done, execute Subtask 2, then execute Subtask 3 after Subtask 2 done.
-from modules.ai2thor.ai2thor_connect import GoToObject
-from test_ai2thor.ai2thor_ctrl_test import PutObject
 
 # TASK ALLOCATION
 robots = [

@@ -1,4 +1,4 @@
-{"task": "Prepare for the meeting", "robot list": [4,5], "object_states": [{"name": "LightSwitch", "contains": [], "state": "OFF"}], "trans": 0, "max_trans": 0}
+{"task": "Prepare for the meeting", "robot list": [4,5], "object_states": [], "trans": 0, "max_trans": 0}
 {"task": "I want to watch news", "robot list": [6,7], "object_states": [{"name": "Television", "contains": [], "state": "ON"}], "trans": 0, "max_trans": 0}
 {"task": "I want to watch TV, and make the room dark", "robot list": [1,3], "object_states": [{"name": "Television", "contains": [], "state": "ON"}, {"name": "LightSwitch", "contains": [], "state": "OFF"}, {"name": "FloorLamp", "contains": [], "state": "OFF"}], "trans": 0, "max_trans": 0}
 {"task": "Put the keychain and credit card into drawer", "robot list": [9,10], "object_states": [{"name": "Drawer", "contains": ["KeyChain", "CreditCard"], "state": "None"}], "trans": 0, "max_trans": 0}

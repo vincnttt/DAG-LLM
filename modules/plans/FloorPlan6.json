@@ -1,4 +1,2 @@
-{"task": "Make a toast for breakfast", "robot list": [1,3,4], "object_states": [{"name": "Bread", "contains": [], "state": "SLICED"}, {"name": "Bread", "contains": [], "state": "COOKED"}, {"name": "Plate", "contains": ["BreadSliced"], "state": "None"}], "trans": 0, "max_trans": 0}
-{"task": "Give me a plate of salad", "robot list": [1,4], "object_states": [{"name": "Lettuce", "contains": [], "state": "SLICED"}, {"name": "Tomato", "contains": [], "state": "SLICED"}, {"name": "Plate", "contains": ["LettuceSliced", "TomatoSliced"], "state": "None"}], "trans": 0, "max_trans": 0}
-{"task": "Give me a coffee, and make the room dark", "robot list": [9,10], "object_states": [{"name": "Mug", "contains": [], "state": "HOT"}, {"name": "LightSwitch", "contains": [], "state": "OFF"}], "trans": 0, "max_trans": 0}
-{"task": "Wash vegetables then store in the fridge", "robot list": [2,4], "object_states": [{"name": "Fridge", "contains": ["Lettuce", "Tomato"], "state": "None"}], "trans": 0, "max_trans": 0}
+{"task": "Make a coffee for breakfast", "robot list": [9,10], "object_states": [{"name": "Mug", "contains": [], "state": "HOT"}], "trans": 0, "max_trans": 0}
+{"task": "Wash vegetables then store in the fridge", "robot list": [2,4], "object_states": [{"name": "Fridge", "contains": ["Lettuce"], "state": "None"}], "trans": 0, "max_trans": 0}

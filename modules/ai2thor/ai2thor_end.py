@@ -610,7 +610,7 @@ for obj_gt in ground_truth:
                 print(obj, gcr_complete)
 
         if state == 'HOT':
-            if obj_name in obj["name"] and obj["temperature"] == 'Hot':
+            if obj_name in obj["name"] and obj["temperature"] == 'RoomTemp':
                 gcr_complete += 1
                 print(obj, gcr_complete)
 
@@ -658,10 +658,10 @@ else:
     else:
         gcr = 1.0
 
-if gcr == 1.0:
-    tc = 1
-else:
-    tc = gcr
+# if gcr == 1.0:
+#     tc = 1.0
+# else:
+#     tc = gcr
 
 # max_trans += 1
 # no_trans_gt += 1
@@ -686,17 +686,22 @@ else:
 #     f.write(f"\n")
 #     f.write(f"SR:{sr}, TCR:{tc}, GCR:{gcr}, RU:{ru}, Exec:{exec}")
 
-if tc == 1:
+if gcr == 1.0 and exec == 1.0:
     sr = 1
 else:
-    sr = tc
+    sr = 0
 
-print(bcolors.OKGREEN + f"SR:{sr}, TCR:{tc}, GCR:{gcr}, Exec:{exec}" + bcolors.ENDC)
+# if tc == 1:
+#     sr = 1
+# else:
+#     sr = tc
+
+print(bcolors.OKGREEN + f"SR:{sr}, GCR:{gcr}, Exec:{exec}" + bcolors.ENDC)
 with open(f"{curr_path}/log.txt", 'a') as f:
     f.write(f"\n\n\n")
     f.write(f"========== RESULT ==========")
     f.write(f"\n")
-    f.write(f"SR:{sr}, TCR:{tc}, GCR:{gcr}, Exec:{exec}")
+    f.write(f"SR:{sr}, GCR:{gcr}, Exec:{exec}")
     f.write(f"\n")
     f.write(f"Runtime:{runtime:0.3f}")
 

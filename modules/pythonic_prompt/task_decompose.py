@@ -1,7 +1,5 @@
 # EXAMPLE 1 - Task Description: Make the room dark.
 # Task Understanding: Turn off the lights and turn off the floor lamp.
-from modules.ai2thor.ai2thor_connect import GoToObject
-
 
 # GENERAL TASK DECOMPOSITION
 # Task Description are the given task, which is described in abstract way.
