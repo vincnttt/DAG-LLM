@@ -2,7 +2,6 @@
 total_exec = 0
 success_exec = 0
 
-# c = Controller(height=720, width=720)
 c = Controller(height=480, width=480)
 c.reset("FloorPlan" + str(floor_no))
 no_robot = len(robots)
@@ -25,11 +24,6 @@ for i in range (no_robot):
     c.step(dict(action="Teleport", position=init_pos, agentId=i))
 
 objs = list([obj["objectId"] for obj in c.last_event.metadata["objects"]])
-# print (objs)
-
-# x = c.step(dict(action="RemoveFromScene", objectId='Lettuce|+01.11|+00.83|-01.43'))
-# c.step({"action":"InitialRandomSpawn", "excludedReceptacles":["Microwave", "Pan", "Chair", "Plate", "Fridge", "Cabinet", "Drawer", "GarbageCan"]})
-# c.step({"action":"InitialRandomSpawn", "excludedReceptacles":["Cabinet", "Drawer", "GarbageCan"]})
 
 action_queue = []
 
@@ -39,7 +33,6 @@ recp_id = None
 
 for i in range (no_robot):
     multi_agent_event = c.step(action="LookDown", degrees=35, agentId=i)
-    # c.step(action="LookUp", degrees=30, 'agent_id':i)
 
 def exec_actions():
     global total_exec, success_exec
@@ -183,12 +176,6 @@ def exec_actions():
                 cv2.imwrite(f_name, e.cv2img)
 
             top_view_rgb = cv2.cvtColor(c.last_event.events[0].third_party_camera_frames[-1], cv2.COLOR_BGR2RGB)
-
-            # cv2.imshow('Top View', top_view_rgb)
-            # f_name = os.path.dirname(__file__) + "/top_view/img_" + str(img_counter).zfill(5) + ".png"
-            # cv2.imwrite(f_name, top_view_rgb)
-            # if cv2.waitKey(25) & 0xFF == ord('q'):
-            #     break
 
             top_view_rgb = cv2.putText(top_view_rgb, f'{logs.pop(0) if logs else "WAIT"}', (20, 30),
                                        cv2.FONT_HERSHEY_SIMPLEX,
@@ -361,7 +348,7 @@ def GoToSlicedObject(robots, dest_obj):
 
     # closest reachable position for each robot
     # all robots cannot reach the same spot
-    # differt close points needs to be found for each robot
+    # different close points needs to be found for each robot
     crp = closest_node(dest_obj_pos, reachable_positions, no_agents, clost_node_location)
 
     goal_thresh = 0.25
@@ -459,8 +446,6 @@ def PickupObject(robots, pick_obj):
                 dest_obj_center = objs_center[idx]
                 if dest_obj_center != {'x': 0.0, 'y': 0.0, 'z': 0.0}:
                     break  # find the first instance
-        # GoToObject(robot, pick_obj_id)
-        # time.sleep(1)
         print("Picking Up ", pick_obj_id, dest_obj_center)
         write_log("[Picking Up]", f"{pick_obj_id} {dest_obj_center}")
 
@@ -523,10 +508,6 @@ def PutObject(robot, put_obj, recp):
                 dist_to_recp = dist
 
     global recp_id
-    # if recp_id is not None:
-    #     recp_obj_id = recp_id
-    # GoToObject(robot, recp_obj_id)
-    # time.sleep(1)
     print("Putting In: ", recp_obj_id, dest_obj_center)
     write_log("[Putting In]", f"{recp_obj_id} {dest_obj_center}")
 
@@ -558,10 +539,6 @@ def PutSlicedObject(robot, put_obj, recp):
                 dist_to_recp = dist
 
     global recp_id
-    # if recp_id is not None:
-    #     recp_obj_id = recp_id
-    # GoToObject(robot, recp_obj_id)
-    # time.sleep(1)
     print("Putting In Sliced: ", recp_obj_id, dest_obj_center)
     write_log("[Putting In Sliced]", f"{recp_obj_id} {dest_obj_center}")
 
@@ -756,57 +733,4 @@ def ThrowObject(robot, sw_obj):
 
     action_queue.append({'action': 'ThrowObject', 'objectId': sw_obj_id, 'agent_id': agent_id})
     time.sleep(1)
-
-
-# def execute_tasks_in_parallel(tasks, dependencies, robot_task_map):
-#     # Step 1: Build graph and in-degrees
-#     graph = defaultdict(list)
-#     in_degree = defaultdict(int)
-#
-#     for pre, nxt in dependencies:
-#         graph[pre].append(nxt)
-#         in_degree[nxt] += 1
-#         if pre not in in_degree:
-#             in_degree[pre] = 0  # Initialize if not already present
-#
-#     # Step 2: Calculate task levels
-#     queue = deque([task for task in in_degree if in_degree[task] == 0])
-#     task_level = {}
-#     level = 0
-#
-#     while queue:
-#         size = len(queue)
-#         for _ in range(size):
-#             current = queue.popleft()
-#             task_level[current] = level
-#             for neighbor in graph[current]:
-#                 in_degree[neighbor] -= 1
-#                 if in_degree[neighbor] == 0:
-#                     queue.append(neighbor)
-#         level += 1  # Increment level after processing one level of tasks
-#
-#     # Group tasks by level for parallel execution
-#     level_tasks = defaultdict(list)
-#     for task, lvl in task_level.items():
-#         level_tasks[lvl].append(task)
-#
-#     # Step 3: Execute tasks using threads
-#     def run_task(task):
-#         robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
-#         print(f"Starting task {task} on {robot}")
-#         # time.sleep(task_durations[task])  # Simulate task duration
-#         print(f"Finished task {task} on {robot}")
-#
-#     for lvl in sorted(level_tasks.keys()):
-#         threads = []
-#         print(f"Executing level {lvl} tasks in parallel: {level_tasks[lvl]}")
-#         for task in level_tasks[lvl]:
-#             # Find the robot assigned to the current task
-#             robot = next(robot for robot, tasks in robot_task_map.items() if task in tasks)
-#             thread = threading.Thread(target=globals()[task], args=(robots[robot],))
-#             threads.append(thread)
-#             thread.start()
-#         for thread in threads:
-#             thread.join()  # Wait for all tasks in the level to complete
-#         print(f"Completed all level {lvl} tasks.\n")
 

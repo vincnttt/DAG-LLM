@@ -116,7 +116,7 @@ def compile_aithor_exec_file(expt_name):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--command", type=str, required=True)
+parser.add_argument("--folder", type=str, required=True)
 args = parser.parse_args()
 
 expt_name = args.command

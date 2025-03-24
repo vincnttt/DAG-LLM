@@ -5,8 +5,6 @@ import argparse
 from datetime import datetime
 
 from openai import OpenAI
-from zhipuai import ZhipuAI
-from anthropic import Anthropic
 
 import sys
 sys.path.append(".")
@@ -21,8 +19,6 @@ def llm(prompt, llm_type, max_tokens=128, temperature=0):
 
     # Used LLM:
     # OpenAI: gpt-4o
-    # Zhipu: glm-4-0520
-    # Anthropic: claude-3-5-sonnet-20241022
 
     with open('key.txt', 'r') as f:
         api_key = f.read()
@@ -32,30 +28,7 @@ def llm(prompt, llm_type, max_tokens=128, temperature=0):
         api_key=api_key
     )
 
-    client_zhipuai = ZhipuAI(
-        base_url=base_url,
-        api_key=api_key
-    )
-
     if llm_type == "gpt-4o":
-        response = client_openai.chat.completions.create(model=llm_type,
-                                                         messages=prompt,
-                                                         max_tokens=max_tokens,
-                                                         temperature=temperature)
-
-        response_msg = response.choices[0].message.content
-        return response, response_msg
-
-    elif llm_type == "glm-4":
-        response = client_zhipuai.chat.completions.create(model=llm_type,
-                                                          messages=prompt,
-                                                          max_tokens=max_tokens,
-                                                          temperature=temperature)
-
-        response_msg = response.choices[0].message.content
-        return response, response_msg
-
-    elif llm_type == "claude-3-5-sonnet-20240620":
         response = client_openai.chat.completions.create(model=llm_type,
                                                          messages=prompt,
                                                          max_tokens=max_tokens,
@@ -131,7 +104,7 @@ if __name__ == '__main__':
     parser.add_argument("--floor-plan", type=int, required=True)
 
     parser.add_argument("--llm", type=str, required=True,
-                        choices=["gpt-4o", "claude-3-5-sonnet-20240620", "glm-4"])
+                        choices=["gpt-4o", "gpt-4"])
 
     parser.add_argument("--prompt-reasoning-set", type=str, default="task_coa_reasoning",
                         choices=["task_coa_reasoning"])
@@ -253,12 +226,9 @@ if __name__ == '__main__':
         robot_n = len(available_robots[i])
         curr_prompt = prompt + plan
         curr_prompt += f"\n# TASK ALLOCATION"
-        # curr_prompt += f"\n# Scenario: There are {robot_n} robots available, The task should be performed using the minimum number of robots necessary. Robots should be assigned to subtasks that match its skills. Using your reasoning come up with a solution to satisfy all constraint, you may need Directed Acyclic Graph (DAG) method to make task allocation better."
         curr_prompt += f"\n# Scenario: There are {robot_n} robots available, each subtasks should be performed using the minimum number of robots necessary. Robots should be assigned to subtasks that match its skills. Using your reasoning come up with a solution to satisfy all constraint, you may need Directed Acyclic Graph (DAG) method to design the dependency of each subtaks, and lists the robots that qualified for each subtasks."
         curr_prompt += f"\n\nrobots = {available_robots[i]}"
         curr_prompt += f"\n{objects_ai}"
-        # curr_prompt += solution
-        # curr_prompt += f"\n\n# IMPORTANT: The AI should ensure that the robots assigned to the tasks have all the necessary skills to perform the tasks. IMPORTANT: Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both and allocate robots based on availability. IMPORTANT: Directed Acyclic Graph (DAG) method are neccesary for task allocation. "
         curr_prompt += f"\n\n # IMPORTANT: The AI should ensure that the robots assigned to the subtasks have all the necessary skills to perform the tasks. IMPORTANT: Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both. IMPORTANT: Initialize all of available subtasks, design the Directed Acyclic Graph (DAG) and lists the robots that qualified for each subtask. IMPORTANT: Follow the code and method based from given examples, then use your reasoning to implement in current task."
         curr_prompt += f"\n# CODE Solution  \n"
 
@@ -266,8 +236,6 @@ if __name__ == '__main__':
             messages = [
                 {"role": "system",
                  "content": "You are Robot Task Allocation Expert. Based from your reasoning, design the dependencies of each subtasks using Directed Acyclic Graph (DAG) method. In the case of qualified robots for each subtasks, ensure that robot skills match the required skills for the subtasks, list all robot that qualified if there is multiple robot meet the skill requirements."},
-                 # "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are necessary to make task allocation better."},
-                 # "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are necessary to make task allocation better, also you can sketch the graph for better visualization."},
                 {"role": "user", "content": curr_prompt}
             ]
             _, text = llm(messages, args.llm, max_tokens=1500)
@@ -276,13 +244,11 @@ if __name__ == '__main__':
             messages = [
                 {"role": "assistant",
                  "content": "You are Robot Task Allocation Expert. Based from your reasoning, design the dependencies of each subtasks using Directed Acyclic Graph (DAG) method. In the case of qualified robots for each subtasks, ensure that robot skills match the required skills for the subtasks, list all robot that qualified if there is multiple robot meet the skill requirements."},
-                 # "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are necessary to make task allocation better."},
-                 # "content": "You are a Robot Task Allocation Expert. Determine whether the subtasks must be performed sequentially or in parallel, or a combination of both based on your reasoning. In the case of Task Allocation based on Robot Skills alone - First check if robot teams are required. Then Ensure that robot skills or robot team skills match the required skills for the subtask when allocating. Make sure that condition is met. Make sure that condition is met. In the Task Allocation based on Skill, if there are multiple options for allocation, pick the best available option by reasoning to the best of your ability. IMPORTANT: Directed Acyclic Graph (DAG) method are necessary to make task allocation better, also you can sketch the graph for better visualization."},
                 {"role": "user", "content": curr_prompt}
             ]
             _, text = llm(messages, args.llm, max_tokens=1500)
 
-        if args.llm == "gpt-4o" or args.llm == "claude-3-5-sonnet-20240620":
+        if args.llm == "gpt-4o":
             text = comment_outside_codeblocks(text)
             code_plan.append(remove_codeblocks(text))
         else:

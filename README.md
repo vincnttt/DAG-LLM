@@ -22,7 +22,7 @@ python3 scripts/main.py --floor-plan {floor_plan_num} --llm {llm}
 
 * Execute generated plan:
 ```commandline
-python3 scripts/execute_plan.py --command {plan_folder_name}
+python3 scripts/execute_plan.py --folder {plan_folder_name}
 ```
 
 ## Dataset
