@@ -30,11 +30,11 @@ python3 scripts/execute_plan.py --folder {plan_folder_name}
 
 `--folder` 输入生成结果的文件夹命名
 
-## Dataset
+## 数据集
 
 本实验共有30个任务，场景包括：厨房、客厅、卧室和浴室。
 
 可以在 `\modules\plans\` 查看并执行。
 
-## Citation
+## 引用
 
