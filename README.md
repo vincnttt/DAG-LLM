@@ -8,7 +8,7 @@
 
 * 下载依赖库：
 ```commandline
-pip install -r requirments.txt
+pip install -r requirements.txt
 ```
 
 * 运行脚本：
@@ -75,4 +75,8 @@ python3 scripts/execute_plan.py --folder {plan_folder_name}
   - C 类任务：10，15，16，19，22，24，30
 
 ## 引用
-
+- DOI: `10.19678/j.issn.1000-3428.0252412`
+- GB/T 7714-2025: 
+```
+[1]林明生,沈立炜,董震.DAG-LLM:基于大语言模型的多机器人任务调度方法[J].计算机工程,2026,52(10):340-349.DOI:10.19678/j.issn.1000-3428.0252412.
+```
